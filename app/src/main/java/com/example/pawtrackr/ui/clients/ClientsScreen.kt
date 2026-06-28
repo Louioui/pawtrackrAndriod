@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -52,7 +54,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pawtrackr.ui.checkout.CheckoutSheet
+import com.example.pawtrackr.ui.checkout.CheckoutViewModel
 import com.example.pawtrackr.domain.model.Client
 import com.example.pawtrackr.domain.model.Pet
 import com.example.pawtrackr.domain.model.PetGender
@@ -68,11 +74,14 @@ private val dateFmt = DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneId
 private fun fmtDate(ms: Long): String = dateFmt.format(Instant.ofEpochMilli(ms))
 private val AGGRESSIVE_RED = Color(0xFFC62828)
 
+private data class CheckoutTarget(val visitId: String, val petId: String, val clientId: String?)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(
     viewModel: ClientsViewModel,
     windowWidthSizeClass: WindowWidthSizeClass,
+    checkoutFactoryProvider: (visitId: String, petId: String, clientId: String?) -> ViewModelProvider.Factory,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -86,6 +95,18 @@ fun ClientsScreen(
 
     var showAddClient by remember { mutableStateOf(false) }
     var addPetForClientId by remember { mutableStateOf<String?>(null) }
+    var checkoutTarget by remember { mutableStateOf<CheckoutTarget?>(null) }
+    var editClient by remember { mutableStateOf<Client?>(null) }
+    var deleteClientConfirm by remember { mutableStateOf<Client?>(null) }
+    var editPet by remember { mutableStateOf<Pet?>(null) }
+    var deletePetConfirm by remember { mutableStateOf<Pet?>(null) }
+
+    val onCheckIn: (String) -> Unit = viewModel::checkIn
+    val onStartCheckout: (Pet) -> Unit = { pet ->
+        pet.visits.firstOrNull { it.isActive }?.let { active ->
+            checkoutTarget = CheckoutTarget(active.id, pet.id, pet.ownerId)
+        }
+    }
 
     // Phone back navigation: pet -> client -> list.
     BackHandler(enabled = !isExpanded && selectedClientId != null) {
@@ -121,14 +142,18 @@ fun ClientsScreen(
                         ClientsListPane(state, selectedClientId, viewModel, now)
                     }
                     Box(Modifier.weight(1.6f).fillMaxHeight().padding(start = 8.dp)) {
-                        DetailPane(selectedClient, selectedPet, viewModel, now, onAddPet = { addPetForClientId = it })
+                        DetailPane(selectedClient, selectedPet, viewModel, now, { addPetForClientId = it }, onCheckIn, onStartCheckout,
+                            onEditClient = { editClient = it }, onDeleteClient = { deleteClientConfirm = it },
+                            onEditPet = { editPet = it }, onDeletePet = { deletePetConfirm = it })
                     }
                 }
             } else {
                 if (selectedClientId == null) {
                     ClientsListPane(state, selectedClientId, viewModel, now)
                 } else {
-                    DetailPane(selectedClient, selectedPet, viewModel, now, onAddPet = { addPetForClientId = it })
+                    DetailPane(selectedClient, selectedPet, viewModel, now, { addPetForClientId = it }, onCheckIn, onStartCheckout,
+                            onEditClient = { editClient = it }, onDeleteClient = { deleteClientConfirm = it },
+                            onEditPet = { editPet = it }, onDeletePet = { deletePetConfirm = it })
                 }
             }
         }
@@ -146,6 +171,17 @@ fun ClientsScreen(
             onConfirm = { name, species, gender, breed ->
                 viewModel.addPet(ownerId, name, species, gender, breed); addPetForClientId = null
             }
+        )
+    }
+    checkoutTarget?.let { target ->
+        val checkoutVm: CheckoutViewModel = viewModel(
+            key = "checkout-${target.visitId}",
+            factory = checkoutFactoryProvider(target.visitId, target.petId, target.clientId)
+        )
+        CheckoutSheet(
+            viewModel = checkoutVm,
+            onDismiss = { checkoutTarget = null },
+            onComplete = { checkoutTarget = null }
         )
     }
 }
@@ -271,19 +307,44 @@ private fun DetailPane(
     pet: Pet?,
     viewModel: ClientsViewModel,
     now: Long,
-    onAddPet: (String) -> Unit
+    onAddPet: (String) -> Unit,
+    onCheckIn: (String) -> Unit,
+    onStartCheckout: (Pet) -> Unit,
+    onEditClient: (Client) -> Unit,
+    onDeleteClient: (Client) -> Unit,
+    onEditPet: (Pet) -> Unit,
+    onDeletePet: (Pet) -> Unit
 ) {
     when {
         client == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Select a client", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        pet != null -> PetDetailPane(pet, now)
-        else -> ClientDetailPane(client, now, onSelectPet = viewModel::selectPet, onAddPet = { onAddPet(client.id) })
+        pet != null -> PetDetailPane(
+            pet, now,
+            onCheckIn = { onCheckIn(pet.id) },
+            onStartCheckout = { onStartCheckout(pet) },
+            onEdit = { onEditPet(pet) },
+            onDelete = { onDeletePet(pet) }
+        )
+        else -> ClientDetailPane(
+            client, now,
+            onSelectPet = viewModel::selectPet,
+            onAddPet = { onAddPet(client.id) },
+            onEdit = { onEditClient(client) },
+            onDelete = { onDeleteClient(client) }
+        )
     }
 }
 
 @Composable
-private fun ClientDetailPane(client: Client, now: Long, onSelectPet: (String) -> Unit, onAddPet: () -> Unit) {
+private fun ClientDetailPane(
+    client: Client,
+    now: Long,
+    onSelectPet: (String) -> Unit,
+    onAddPet: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
     val revenue = client.pets.fold(BigDecimal.ZERO) { acc, p -> acc + p.lifetimeValue }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
@@ -293,6 +354,10 @@ private fun ClientDetailPane(client: Client, now: Long, onSelectPet: (String) ->
                 if (client.hasAggressivePet) AssistChip(onClick = {}, label = { Text("Aggressive pet") },
                     leadingIcon = { Icon(Icons.Default.Warning, null, tint = AGGRESSIVE_RED) })
                 if (client.hasMissingInfo) AssistChip(onClick = {}, label = { Text("Missing info") })
+            }
+            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onEdit) { Text("Edit") }
+                TextButton(onClick = onDelete) { Text("Delete", color = AGGRESSIVE_RED) }
             }
         }
         item {
@@ -336,12 +401,34 @@ private fun PetRow(pet: Pet, now: Long, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PetDetailPane(pet: Pet, now: Long) {
+private fun PetDetailPane(
+    pet: Pet,
+    now: Long,
+    onCheckIn: () -> Unit,
+    onStartCheckout: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
             Text(pet.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(pet.shortDescriptor, color = MaterialTheme.colorScheme.onSurfaceVariant)
             pet.ageString(now)?.let { Text("Age: $it", style = MaterialTheme.typography.bodyMedium) }
+            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onEdit) { Text("Edit") }
+                TextButton(onClick = onDelete) { Text("Delete", color = AGGRESSIVE_RED) }
+            }
+        }
+        item {
+            if (pet.hasActiveVisit) {
+                Button(onClick = onStartCheckout, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text("Checkout — end session")
+                }
+            } else {
+                Button(onClick = onCheckIn, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text("Check in")
+                }
+            }
         }
         if (pet.isAggressive) item {
             Card(colors = CardDefaults.cardColors(containerColor = AGGRESSIVE_RED.copy(alpha = 0.12f))) {
@@ -390,14 +477,23 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddClientDialog(onDismiss: () -> Unit, onConfirm: (String, String, String?, String?) -> Unit) {
-    var first by remember { mutableStateOf("") }
-    var last by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+private fun ClientFormDialog(
+    title: String,
+    confirmLabel: String,
+    initialFirst: String = "",
+    initialLast: String = "",
+    initialPhone: String = "",
+    initialEmail: String = "",
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String?, String?) -> Unit
+) {
+    var first by remember { mutableStateOf(initialFirst) }
+    var last by remember { mutableStateOf(initialLast) }
+    var phone by remember { mutableStateOf(initialPhone) }
+    var email by remember { mutableStateOf(initialEmail) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New client") },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(first, { first = it }, label = { Text("First name") }, singleLine = true)
@@ -410,7 +506,7 @@ private fun AddClientDialog(onDismiss: () -> Unit, onConfirm: (String, String, S
             TextButton(
                 enabled = first.isNotBlank() || last.isNotBlank(),
                 onClick = { onConfirm(first, last, phone.ifBlank { null }, email.ifBlank { null }) }
-            ) { Text("Add") }
+            ) { Text(confirmLabel) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
@@ -418,14 +514,23 @@ private fun AddClientDialog(onDismiss: () -> Unit, onConfirm: (String, String, S
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddPetDialog(onDismiss: () -> Unit, onConfirm: (String, Species, PetGender, String?) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var breed by remember { mutableStateOf("") }
-    var species by remember { mutableStateOf(Species.DOG) }
-    var gender by remember { mutableStateOf(PetGender.MALE) }
+private fun PetFormDialog(
+    title: String,
+    confirmLabel: String,
+    initialName: String = "",
+    initialBreed: String = "",
+    initialSpecies: Species = Species.DOG,
+    initialGender: PetGender = PetGender.MALE,
+    onDismiss: () -> Unit,
+    onConfirm: (String, Species, PetGender, String?) -> Unit
+) {
+    var name by remember { mutableStateOf(initialName) }
+    var breed by remember { mutableStateOf(initialBreed) }
+    var species by remember { mutableStateOf(initialSpecies) }
+    var gender by remember { mutableStateOf(initialGender) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New pet") },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
@@ -443,8 +548,19 @@ private fun AddPetDialog(onDismiss: () -> Unit, onConfirm: (String, Species, Pet
             }
         },
         confirmButton = {
-            TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name, species, gender, breed.ifBlank { null }) }) { Text("Add") }
+            TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name, species, gender, breed.ifBlank { null }) }) { Text(confirmLabel) }
         },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun ConfirmDeleteDialog(title: String, message: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Delete", color = AGGRESSIVE_RED) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

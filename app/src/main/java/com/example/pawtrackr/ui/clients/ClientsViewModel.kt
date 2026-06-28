@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.pawtrackr.data.repository.ClientRepository
 import com.example.pawtrackr.data.repository.PetRepository
+import com.example.pawtrackr.data.repository.VisitRepository
 import com.example.pawtrackr.domain.model.Client
 import com.example.pawtrackr.domain.model.PetGender
 import com.example.pawtrackr.domain.model.Species
@@ -41,6 +42,7 @@ data class ClientsUiState(
 class ClientsViewModel(
     private val clientRepository: ClientRepository,
     private val petRepository: PetRepository,
+    private val visitRepository: VisitRepository,
     private val currentUserId: String,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
@@ -123,6 +125,14 @@ class ClientsViewModel(
         }
     }
 
+    fun updateClient(id: String, firstName: String, lastName: String, phone: String?, email: String?) {
+        viewModelScope.launch { clientRepository.updateClient(id, firstName, lastName, phone, email) }
+    }
+
+    fun updatePet(petId: String, name: String, species: Species, gender: PetGender, breed: String?) {
+        viewModelScope.launch { petRepository.updatePet(petId, name, species, gender, breed) }
+    }
+
     fun deleteClient(id: String) {
         viewModelScope.launch {
             if (_selectedClientId.value == id) clearClientSelection()
@@ -130,9 +140,22 @@ class ClientsViewModel(
         }
     }
 
+    fun deletePet(petId: String) {
+        viewModelScope.launch {
+            if (_selectedPetId.value == petId) selectPet(null)
+            petRepository.deletePet(petId)
+        }
+    }
+
+    /** Start (or reuse) a visit for a pet. The graph Flow re-emits, flipping the UI to "In session". */
+    fun checkIn(petId: String) {
+        viewModelScope.launch { visitRepository.checkIn(petId, currentUserId) }
+    }
+
     class Factory(
         private val clientRepository: ClientRepository,
         private val petRepository: PetRepository,
+        private val visitRepository: VisitRepository,
         private val currentUserId: String
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -140,7 +163,7 @@ class ClientsViewModel(
             require(modelClass.isAssignableFrom(ClientsViewModel::class.java)) {
                 "Unknown ViewModel class: ${modelClass.name}"
             }
-            return ClientsViewModel(clientRepository, petRepository, currentUserId) as T
+            return ClientsViewModel(clientRepository, petRepository, visitRepository, currentUserId) as T
         }
     }
 }

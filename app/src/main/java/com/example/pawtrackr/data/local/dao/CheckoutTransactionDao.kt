@@ -19,6 +19,10 @@ interface CheckoutTransactionDao {
     @Query("SELECT * FROM checkout_transactions WHERE id = :id")
     suspend fun getById(id: String): CheckoutTransactionEntity?
 
+    /** Idempotency lookup: the durable record for a given checkout key, if any. */
+    @Query("SELECT * FROM checkout_transactions WHERE idempotencyKey = :key LIMIT 1")
+    suspend fun getByIdempotencyKey(key: String): CheckoutTransactionEntity?
+
     @Query("DELETE FROM checkout_transactions WHERE id = :id")
     suspend fun deleteById(id: String)
 }

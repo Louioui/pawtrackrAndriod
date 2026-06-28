@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.example.pawtrackr.data.local.entities.ClientEntity
 import com.example.pawtrackr.data.local.relations.ClientGraph
 import com.example.pawtrackr.data.local.relations.ClientWithPets
@@ -21,6 +22,11 @@ interface ClientDao {
     @Query("SELECT * FROM clients WHERE userId = :userId")
     fun watchClientGraph(userId: String): Flow<List<ClientGraph>>
 
+    /** One-shot graph read for summary/insight rollups. */
+    @Transaction
+    @Query("SELECT * FROM clients WHERE userId = :userId")
+    suspend fun getClientGraph(userId: String): List<ClientGraph>
+
     @Transaction
     @Query("SELECT * FROM clients WHERE userId = :userId ORDER BY lastName ASC, firstName ASC")
     fun watchClientsWithPetsForUser(userId: String): Flow<List<ClientWithPets>>
@@ -31,7 +37,8 @@ interface ClientDao {
     @Query("SELECT COUNT(*) FROM clients")
     suspend fun count(): Int
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // @Upsert, not @Insert(REPLACE): REPLACE would cascade-delete this client's pets.
+    @Upsert
     suspend fun upsertClient(client: ClientEntity)
 
     @Query("DELETE FROM clients WHERE id = :clientId")

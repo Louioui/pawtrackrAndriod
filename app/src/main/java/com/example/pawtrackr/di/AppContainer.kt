@@ -2,8 +2,13 @@ package com.example.pawtrackr.di
 
 import android.content.Context
 import com.example.pawtrackr.data.local.PawtrackrDatabase
+import com.example.pawtrackr.data.repository.BusinessConfigRepository
+import com.example.pawtrackr.data.repository.CheckoutRepository
 import com.example.pawtrackr.data.repository.ClientRepository
 import com.example.pawtrackr.data.repository.PetRepository
+import com.example.pawtrackr.data.repository.ServiceRepository
+import com.example.pawtrackr.data.repository.SummaryRepository
+import com.example.pawtrackr.data.repository.VisitRepository
 import com.example.pawtrackr.data.seed.DebugSeeder
 
 /**
@@ -19,5 +24,10 @@ class AppContainer(context: Context) {
 
     val clientRepository: ClientRepository = ClientRepository(database.clientDao())
     val petRepository: PetRepository = PetRepository(database.petDao())
+    val serviceRepository: ServiceRepository = ServiceRepository(database.serviceDao())
+    val visitRepository: VisitRepository = VisitRepository(database.visitDao())
+    val summaryRepository: SummaryRepository = SummaryRepository(database, currentUserId)
+    val businessConfigRepository: BusinessConfigRepository = BusinessConfigRepository(database.businessConfigDao())
+    val checkoutRepository: CheckoutRepository = CheckoutRepository(database, summaryRepository)
     val debugSeeder: DebugSeeder = DebugSeeder(database, currentUserId)
 }

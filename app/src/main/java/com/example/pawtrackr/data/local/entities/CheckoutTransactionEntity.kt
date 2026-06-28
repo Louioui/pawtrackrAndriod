@@ -26,7 +26,9 @@ import java.util.UUID
         Index("petUUID"),
         Index("clientUUID"),
         Index("deviceID"),
-        Index("idempotencyKey"),
+        // Unique: one durable checkout record per visit. The transaction is the real
+        // idempotency guarantee; this turns any logic slip into a loud constraint error.
+        Index(value = ["idempotencyKey"], unique = true),
         Index("createdAt")
     ]
 )

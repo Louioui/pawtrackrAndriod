@@ -111,6 +111,27 @@ data class Pet(
     }
 }
 
+data class BusinessConfig(
+    val id: String,
+    val name: String,
+    val email: String?,
+    val phone: String?,
+    val address: String?,
+    val brandAccentColorHex: String,
+    val isSetupComplete: Boolean
+)
+
+data class Service(
+    val id: String,
+    val name: String,
+    val categoryRaw: String?,
+    val basePrice: BigDecimal,
+    val isEnabled: Boolean,
+    val isPackage: Boolean
+) {
+    val category: ServiceCategory? get() = ServiceCategory.fromRaw(categoryRaw)
+}
+
 data class Client(
     val id: String,
     val userId: String?,

@@ -16,6 +16,12 @@ interface ClientInsightSummaryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: ClientInsightSummaryEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<ClientInsightSummaryEntity>)
+
+    @Query("DELETE FROM client_insight_summaries")
+    suspend fun clear()
+
     @Query("SELECT * FROM client_insight_summaries WHERE id = :id")
     suspend fun getById(id: String): ClientInsightSummaryEntity?
 

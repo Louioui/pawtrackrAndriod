@@ -15,6 +15,12 @@ interface ServiceDao {
     @Query("SELECT * FROM services ORDER BY name ASC")
     fun watchAllServices(): Flow<List<ServiceEntity>>
 
+    @Query("SELECT * FROM services WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<String>): List<ServiceEntity>
+
+    @Query("SELECT COUNT(*) FROM services")
+    suspend fun count(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertService(service: ServiceEntity)
 

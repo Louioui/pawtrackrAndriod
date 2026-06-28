@@ -43,6 +43,26 @@ class ClientRepository(
         entity.id
     }
 
+    suspend fun updateClient(
+        id: String,
+        firstName: String,
+        lastName: String,
+        phone: String?,
+        email: String?
+    ) = withContext(ioDispatcher) {
+        val existing = clientDao.getClientById(id) ?: return@withContext
+        // copy preserves untouched fields (userId, createdAt, photoData, loyaltyPoints, …).
+        clientDao.upsertClient(
+            existing.copy(
+                firstName = firstName.trim(),
+                lastName = lastName.trim(),
+                phone = phone?.trim()?.ifBlank { null },
+                email = email?.trim()?.lowercase()?.ifBlank { null },
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     suspend fun deleteClient(id: String) = withContext(ioDispatcher) {
         clientDao.deleteClientById(id)
     }

@@ -15,6 +15,12 @@ interface DaySummaryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: DaySummaryEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<DaySummaryEntity>)
+
+    @Query("DELETE FROM day_summaries")
+    suspend fun clear()
+
     @Query("SELECT * FROM day_summaries WHERE id = :id")
     suspend fun getById(id: String): DaySummaryEntity?
 

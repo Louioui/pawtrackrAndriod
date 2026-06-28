@@ -33,6 +33,25 @@ class PetRepository(
         entity.id
     }
 
+    suspend fun updatePet(
+        id: String,
+        name: String,
+        species: Species,
+        gender: PetGender,
+        breed: String?
+    ) = withContext(ioDispatcher) {
+        val existing = petDao.getPetById(id) ?: return@withContext
+        petDao.upsertPet(
+            existing.copy(
+                name = name.trim(),
+                speciesRaw = species.raw,
+                genderRaw = gender.raw,
+                breed = breed?.trim()?.ifBlank { null },
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     suspend fun deletePet(id: String) = withContext(ioDispatcher) {
         petDao.deletePetById(id)
     }

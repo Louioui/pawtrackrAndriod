@@ -120,7 +120,11 @@ abstract class PawtrackrDatabase : RoomDatabase() {
                     context.applicationContext,
                     PawtrackrDatabase::class.java,
                     "pawtrackr_local.db"
-                ).build().also { INSTANCE = it }
+                )
+                    // Pre-release: no shipped data, so recreate on any schema change rather
+                    // than hand-writing migrations. Replace with real migrations before launch.
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
     }
 }

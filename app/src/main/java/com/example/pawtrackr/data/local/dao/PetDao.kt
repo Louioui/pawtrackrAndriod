@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.example.pawtrackr.data.local.entities.PetEntity
 import com.example.pawtrackr.data.local.relations.PetWithVisits
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +22,8 @@ interface PetDao {
     @Query("SELECT * FROM pets WHERE id = :petId")
     suspend fun getPetById(petId: String): PetEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // @Upsert, not @Insert(REPLACE): REPLACE would cascade-delete this pet's visits.
+    @Upsert
     suspend fun upsertPet(pet: PetEntity)
 
     @Query("DELETE FROM pets WHERE id = :petId")
