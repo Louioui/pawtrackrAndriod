@@ -40,8 +40,15 @@
     <string name="settings_address_label">Address</string>
     <string name="settings_saved">Saved ✓</string>
     <string name="settings_save_changes">Save changes</string>
+    <string name="settings_profile_ready">Profile ready</string>
+    <string name="settings_needs_name">Business name required</string>
+    <string name="settings_invalid_email">Invalid email</string>
+    <string name="settings_contact_section">Contact details</string>
 
     <!-- Onboarding -->
+    <string name="onboarding_brand_name">Pawtrackr</string>
+    <string name="onboarding_welcome_title">Pawtrackr</string>
+    <string name="onboarding_welcome_badge">Pet business command center</string>
     <string name="onboarding_welcome_subtitle">Run your pet-grooming business — clients, pets, checkout, and insights, all in one place.</string>
     <string name="onboarding_get_started">Get Started</string>
     <string name="onboarding_business_title">Your business</string>

@@ -1,13 +1,13 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.example.pawtrackr.ui.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -30,6 +30,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pawtrackr.R
+import com.example.pawtrackr.ui.components.PawtrackrAccentEdge
+import com.example.pawtrackr.ui.components.PawtrackrCard
+import com.example.pawtrackr.ui.components.PawtrackrChip
+import com.example.pawtrackr.ui.components.PawtrackrChipTone
+import com.example.pawtrackr.ui.components.PawtrackrSectionTitle
+import com.example.pawtrackr.ui.theme.PawtrackrSemanticColor
+import com.example.pawtrackr.ui.theme.PawtrackrStaticColor
+import com.example.pawtrackr.ui.theme.PawtrackrTokens
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
@@ -41,53 +49,109 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
             return@Scaffold
         }
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState())
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.lg)
         ) {
-            Text(stringResource(R.string.settings_business_profile), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = state.name, onValueChange = viewModel::setName,
-                label = { Text(stringResource(R.string.settings_business_name_label)) }, singleLine = true,
-                isError = state.name.isNotEmpty() && !state.nameValid,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = state.email, onValueChange = viewModel::setEmail,
-                label = { Text(stringResource(R.string.settings_email_label)) }, singleLine = true, isError = !state.emailValid,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = state.phone, onValueChange = viewModel::setPhone,
-                label = { Text(stringResource(R.string.settings_phone_label)) }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = state.address, onValueChange = viewModel::setAddress,
-                label = { Text(stringResource(R.string.settings_address_label)) }, singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            state.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp))
-            }
-            if (state.saved) {
-                Text(stringResource(R.string.settings_saved), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 12.dp))
-            }
-
-            Spacer(Modifier.height(24.dp))
+            SettingsHeaderCard(state)
+            SettingsFormCard(state, viewModel)
             Button(
                 onClick = viewModel::save,
                 enabled = state.canSave,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
             ) {
-                if (state.saving) CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp)
+                if (state.saving) CircularProgressIndicator(Modifier.heightIn(max = 18.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.settings_save_changes))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsHeaderCard(state: SettingsUiState) {
+    val statusTone = when {
+        state.saved -> PawtrackrChipTone.Success
+        !state.nameValid -> PawtrackrChipTone.Warning
+        !state.emailValid -> PawtrackrChipTone.Danger
+        else -> PawtrackrChipTone.Brand
+    }
+    val statusLabel = when {
+        state.saved -> stringResource(R.string.settings_saved)
+        !state.nameValid -> stringResource(R.string.settings_needs_name)
+        !state.emailValid -> stringResource(R.string.settings_invalid_email)
+        else -> stringResource(R.string.settings_profile_ready)
+    }
+
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth(),
+        accentColor = PawtrackrStaticColor.BrandPrimary,
+        accentEdge = PawtrackrAccentEdge.Top
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
+            Text(
+                stringResource(R.string.settings_business_profile),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                state.name.ifBlank { stringResource(R.string.app_name) },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            PawtrackrChip(label = statusLabel, tone = statusTone)
+        }
+    }
+}
+
+@Composable
+private fun SettingsFormCard(
+    state: SettingsUiState,
+    viewModel: SettingsViewModel
+) {
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth(),
+        accentColor = if (state.error != null) PawtrackrSemanticColor.Danger else PawtrackrSemanticColor.Info
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+            PawtrackrSectionTitle(stringResource(R.string.settings_contact_section))
+            OutlinedTextField(
+                value = state.name,
+                onValueChange = viewModel::setName,
+                label = { Text(stringResource(R.string.settings_business_name_label)) },
+                singleLine = true,
+                isError = state.name.isNotEmpty() && !state.nameValid,
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = state.email,
+                onValueChange = viewModel::setEmail,
+                label = { Text(stringResource(R.string.settings_email_label)) },
+                singleLine = true,
+                isError = !state.emailValid,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = state.phone,
+                onValueChange = viewModel::setPhone,
+                label = { Text(stringResource(R.string.settings_phone_label)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = state.address,
+                onValueChange = viewModel::setAddress,
+                label = { Text(stringResource(R.string.settings_address_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
+                state.error?.let { PawtrackrChip(label = it, tone = PawtrackrChipTone.Danger) }
+                if (state.saved) PawtrackrChip(label = stringResource(R.string.settings_saved), tone = PawtrackrChipTone.Success)
             }
         }
     }
