@@ -3,7 +3,14 @@
 package com.example.pawtrackr.ui.clients
 
 import androidx.activity.compose.BackHandler
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -160,17 +167,53 @@ fun ClientsScreen(
     }
 
     if (showAddClient) {
-        AddClientDialog(
+        ClientFormDialog(
+            title = "New client", confirmLabel = "Add",
             onDismiss = { showAddClient = false },
             onConfirm = { f, l, p, e -> viewModel.addClient(f, l, p, e); showAddClient = false }
         )
     }
+    editClient?.let { c ->
+        ClientFormDialog(
+            title = "Edit client", confirmLabel = "Save",
+            initialFirst = c.firstName, initialLast = c.lastName,
+            initialPhone = c.phone.orEmpty(), initialEmail = c.email.orEmpty(),
+            onDismiss = { editClient = null },
+            onConfirm = { f, l, p, e -> viewModel.updateClient(c.id, f, l, p, e); editClient = null }
+        )
+    }
+    deleteClientConfirm?.let { c ->
+        ConfirmDeleteDialog(
+            title = "Delete ${c.fullName}?",
+            message = "This also removes their pets and visit history.",
+            onDismiss = { deleteClientConfirm = null },
+            onConfirm = { viewModel.deleteClient(c.id); deleteClientConfirm = null }
+        )
+    }
     addPetForClientId?.let { ownerId ->
-        AddPetDialog(
+        PetFormDialog(
+            title = "New pet", confirmLabel = "Add",
             onDismiss = { addPetForClientId = null },
             onConfirm = { name, species, gender, breed ->
                 viewModel.addPet(ownerId, name, species, gender, breed); addPetForClientId = null
             }
+        )
+    }
+    editPet?.let { p ->
+        PetFormDialog(
+            title = "Edit pet", confirmLabel = "Save",
+            initialName = p.name, initialBreed = p.breed.orEmpty(),
+            initialSpecies = p.species, initialGender = p.gender,
+            onDismiss = { editPet = null },
+            onConfirm = { name, species, gender, breed -> viewModel.updatePet(p.id, name, species, gender, breed); editPet = null }
+        )
+    }
+    deletePetConfirm?.let { p ->
+        ConfirmDeleteDialog(
+            title = "Delete ${p.name}?",
+            message = "This removes the pet and its visit history.",
+            onDismiss = { deletePetConfirm = null },
+            onConfirm = { viewModel.deletePet(p.id); deletePetConfirm = null }
         )
     }
     checkoutTarget?.let { target ->
@@ -455,10 +498,19 @@ private fun PetDetailPane(
         if (sorted.isEmpty()) item { Text("No visits yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(sorted, key = { it.id }) { v ->
             Card(Modifier.fillMaxWidth()) {
-                Row(Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(fmtDate(v.sortKeyDate))
-                    if (v.isActive) Text("In session", color = MaterialTheme.colorScheme.primary)
-                    else Text(money(v.effectiveTotal), fontWeight = FontWeight.SemiBold)
+                Column(Modifier.padding(12.dp).fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(fmtDate(v.sortKeyDate))
+                        if (v.isActive) Text("In session", color = MaterialTheme.colorScheme.primary)
+                        else Text(money(v.effectiveTotal), fontWeight = FontWeight.SemiBold)
+                    }
+                    if (v.hasPhotos) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            v.beforeThumb?.let { PhotoThumb(it, "Before") }
+                            v.afterThumb?.let { PhotoThumb(it, "After") }
+                        }
+                    }
                 }
             }
         }
@@ -472,6 +524,22 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
             Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+private fun PhotoThumb(bytes: ByteArray, label: String) {
+    val image = remember(bytes) { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (image != null) {
+            Image(
+                bitmap = image,
+                contentDescription = label,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp))
+            )
+        }
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

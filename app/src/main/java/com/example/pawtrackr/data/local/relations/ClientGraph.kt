@@ -17,7 +17,11 @@ data class VisitSummary(
     val petId: String?,
     val startedAt: Long,
     val endedAt: Long?,
-    val total: BigDecimal
+    val total: BigDecimal,
+    // Small thumbnails only (the full-size photo blobs are never loaded into the list graph).
+    // NOTE: at large scale this should move to a pet-detail-only query; fine at current scale.
+    val beforeThumbnailData: ByteArray? = null,
+    val afterThumbnailData: ByteArray? = null
 )
 
 /** A pet plus its visit summaries (for needs-attention / lifetime-value derivation). */

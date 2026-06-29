@@ -29,9 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.pawtrackr.R
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -44,11 +46,11 @@ private val CHURN_RED = Color(0xFFC62828)
 fun InsightsScreen(viewModel: InsightsViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(modifier = modifier, topBar = { TopAppBar(title = { Text("Insights") }) }) { padding ->
+    Scaffold(modifier = modifier, topBar = { TopAppBar(title = { Text(stringResource(R.string.insights_title)) }) }) { padding ->
         when {
             state.loading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.isEmpty -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No completed visits yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.insights_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> LazyColumn(
                 Modifier.fillMaxSize().padding(padding).padding(16.dp),
@@ -56,20 +58,20 @@ fun InsightsScreen(viewModel: InsightsViewModel, modifier: Modifier = Modifier) 
             ) {
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Stat("Total revenue", money(state.totalRevenue), Modifier.weight(1f))
-                        Stat("Visits", state.totalVisits.toString(), Modifier.weight(1f))
-                        Stat("Avg ticket", money(state.avgTicket), Modifier.weight(1f))
+                        Stat(stringResource(R.string.insights_total_revenue), money(state.totalRevenue), Modifier.weight(1f))
+                        Stat(stringResource(R.string.insights_visits), state.totalVisits.toString(), Modifier.weight(1f))
+                        Stat(stringResource(R.string.insights_avg_ticket), money(state.avgTicket), Modifier.weight(1f))
                     }
                 }
-                item { SectionTitle("Revenue (recent days)"); RevenueChart(state.revenueByDay) }
+                item { SectionTitle(stringResource(R.string.insights_revenue_recent_days)); RevenueChart(state.revenueByDay) }
                 if (state.topServices.isNotEmpty()) item {
-                    SectionTitle("Top services"); BarList(state.topServices.map { it.name to it.count })
+                    SectionTitle(stringResource(R.string.insights_top_services)); BarList(state.topServices.map { it.name to it.count })
                 }
                 if (state.topCategories.isNotEmpty()) item {
-                    SectionTitle("By category"); BarList(state.topCategories.map { it.name to it.count })
+                    SectionTitle(stringResource(R.string.insights_by_category)); BarList(state.topCategories.map { it.name to it.count })
                 }
                 if (state.topClients.isNotEmpty()) {
-                    item { SectionTitle("Top clients") }
+                    item { SectionTitle(stringResource(R.string.insights_top_clients)) }
                     items(state.topClients, key = { it.name }) { c ->
                         Card(Modifier.fillMaxWidth()) {
                             Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -108,7 +110,7 @@ private fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
 @Composable
 private fun RevenueChart(days: List<DayRevenue>) {
     if (days.isEmpty()) {
-        Text("No revenue yet.", color = MaterialTheme.colorScheme.onSurfaceVariant); return
+        Text(stringResource(R.string.insights_no_revenue), color = MaterialTheme.colorScheme.onSurfaceVariant); return
     }
     val max = days.maxOf { it.revenue }.let { if (it.signum() == 0) BigDecimal.ONE else it }
     Card(Modifier.fillMaxWidth()) {

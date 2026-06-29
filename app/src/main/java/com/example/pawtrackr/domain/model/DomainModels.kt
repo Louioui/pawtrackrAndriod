@@ -21,8 +21,12 @@ data class Visit(
     val petId: String?,
     val startedAt: Long,
     val endedAt: Long?,
-    val total: BigDecimal
+    val total: BigDecimal,
+    val beforeThumb: ByteArray? = null,
+    val afterThumb: ByteArray? = null
 ) {
+    val hasPhotos: Boolean get() = beforeThumb != null || afterThumb != null
+
     val isCompleted: Boolean get() = endedAt != null
     val isActive: Boolean get() = endedAt == null
     /** Primary date for sorting/reports. */

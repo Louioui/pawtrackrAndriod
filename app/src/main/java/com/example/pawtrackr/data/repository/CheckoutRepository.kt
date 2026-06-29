@@ -10,6 +10,7 @@ import com.example.pawtrackr.domain.checkout.CheckoutMath
 import com.example.pawtrackr.domain.checkout.CheckoutRequest
 import com.example.pawtrackr.domain.checkout.CheckoutResult
 import com.example.pawtrackr.domain.checkout.LineInput
+import com.example.pawtrackr.domain.loyalty.LoyaltyEngine
 import java.math.BigDecimal
 
 /**
@@ -26,8 +27,8 @@ import java.math.BigDecimal
  * After the transaction commits, [SummaryRepository.rebuildAll] refreshes the analytics
  * rollups (DaySummary/ServiceDaySummary/…) that Insights reads.
  *
- * DEFERRED PARITY (not yet ported, matching iOS): loyalty-point accrual
- * (`LoyaltyService.applyPoints`), before/after photos, tips/manual-amount override.
+ * DEFERRED PARITY (not yet ported, matching iOS): before/after visit photos, manual-amount
+ * override. (Loyalty-point accrual and tips ARE ported.)
  */
 class CheckoutRepository(
     private val db: PawtrackrDatabase,
@@ -66,6 +67,7 @@ class CheckoutRepository(
         val servicesTotal = CheckoutMath.round(request.amount ?: naturalSubtotal)
         val finalTotal = CheckoutMath.round(servicesTotal + request.tip)
         val unitPrices = CheckoutMath.reconcileUnitPrices(lines, servicesTotal)
+        val loyaltyPoints = LoyaltyEngine.calculatePoints(finalTotal)
 
         // Replace line items with the current selection's snapshots.
         db.visitDao().deleteItemsForVisit(request.visitId)
@@ -106,11 +108,26 @@ class CheckoutRepository(
                 total = finalTotal,
                 endedAt = now,
                 note = request.note ?: visit.note,
+                loyaltyPointsChange = loyaltyPoints,
+                beforePhotoData = request.beforePhoto ?: visit.beforePhotoData,
+                beforeThumbnailData = request.beforeThumb ?: visit.beforeThumbnailData,
+                afterPhotoData = request.afterPhoto ?: visit.afterPhotoData,
+                afterThumbnailData = request.afterThumb ?: visit.afterThumbnailData,
                 updatedAt = now,
                 lastModifiedAt = now,
                 lastModifiedBy = request.userId.orEmpty()
             )
         )
+
+        // Accrue loyalty points to the owning client (1 per whole dollar). Runs only on the
+        // non-replay path (idempotency short-circuits above), so points are never double-counted.
+        request.clientId?.let { clientId ->
+            db.clientDao().getClientById(clientId)?.let { client ->
+                db.clientDao().upsertClient(
+                    client.copy(loyaltyPoints = client.loyaltyPoints + loyaltyPoints, updatedAt = now)
+                )
+            }
+        }
 
         // Mark the durable transaction succeeded (create or update).
         val txn = (existing ?: CheckoutTransactionEntity(idempotencyKey = key))

@@ -24,16 +24,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.pawtrackr.R
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Scaffold(modifier = modifier, topBar = { TopAppBar(title = { Text("Settings") }) }) { padding ->
+    Scaffold(modifier = modifier, topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
         if (state.loading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             return@Scaffold
@@ -41,33 +43,33 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
         Column(
             Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState())
         ) {
-            Text("Business profile", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.settings_business_profile), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = state.name, onValueChange = viewModel::setName,
-                label = { Text("Business name *") }, singleLine = true,
+                label = { Text(stringResource(R.string.settings_business_name_label)) }, singleLine = true,
                 isError = state.name.isNotEmpty() && !state.nameValid,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = state.email, onValueChange = viewModel::setEmail,
-                label = { Text("Email") }, singleLine = true, isError = !state.emailValid,
+                label = { Text(stringResource(R.string.settings_email_label)) }, singleLine = true, isError = !state.emailValid,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = state.phone, onValueChange = viewModel::setPhone,
-                label = { Text("Phone") }, singleLine = true,
+                label = { Text(stringResource(R.string.settings_phone_label)) }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = state.address, onValueChange = viewModel::setAddress,
-                label = { Text("Address") }, singleLine = true,
+                label = { Text(stringResource(R.string.settings_address_label)) }, singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -75,7 +77,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
                 Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp))
             }
             if (state.saved) {
-                Text("Saved ✓", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 12.dp))
+                Text(stringResource(R.string.settings_saved), color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 12.dp))
             }
 
             Spacer(Modifier.height(24.dp))
@@ -85,7 +87,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
             ) {
                 if (state.saving) CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp)
-                else Text("Save changes")
+                else Text(stringResource(R.string.settings_save_changes))
             }
         }
     }

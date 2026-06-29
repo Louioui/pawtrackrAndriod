@@ -20,10 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.pawtrackr.R
 
 @Composable
 fun OnboardingScreen(viewModel: OnboardingViewModel, modifier: Modifier = Modifier) {
@@ -55,13 +57,13 @@ private fun Welcome(onStart: () -> Unit) {
         Text("🐾", style = MaterialTheme.typography.displayLarge)
         Text("Pawtrackr", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
         Text(
-            "Run your pet-grooming business — clients, pets, checkout, and insights, all in one place.",
+            stringResource(R.string.onboarding_welcome_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 12.dp, bottom = 40.dp)
         )
         Button(onClick = onStart, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
-            Text("Get Started")
+            Text(stringResource(R.string.onboarding_get_started))
         }
     }
 }
@@ -77,22 +79,22 @@ private fun BusinessProfile(
     onFinish: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Text("Your business", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_business_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(
-            "Tell us a bit about your shop. You can change this later in Settings.",
+            stringResource(R.string.onboarding_business_subtitle),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
         )
         OutlinedTextField(
             value = state.name, onValueChange = onName,
-            label = { Text("Business name *") }, singleLine = true,
+            label = { Text(stringResource(R.string.onboarding_business_name_label)) }, singleLine = true,
             isError = state.name.isNotEmpty() && !state.nameValid,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer16()
         OutlinedTextField(
             value = state.email, onValueChange = onEmail,
-            label = { Text("Email") }, singleLine = true,
+            label = { Text(stringResource(R.string.onboarding_email_label)) }, singleLine = true,
             isError = !state.emailValid,
             keyboardType = KeyboardType.Email,
             modifier = Modifier.fillMaxWidth()
@@ -100,14 +102,14 @@ private fun BusinessProfile(
         Spacer16()
         OutlinedTextField(
             value = state.phone, onValueChange = onPhone,
-            label = { Text("Phone") }, singleLine = true,
+            label = { Text(stringResource(R.string.onboarding_phone_label)) }, singleLine = true,
             keyboardType = KeyboardType.Phone,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer16()
         OutlinedTextField(
             value = state.address, onValueChange = onAddress,
-            label = { Text("Address") }, singleLine = true,
+            label = { Text(stringResource(R.string.onboarding_address_label)) }, singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         state.error?.let {
@@ -122,10 +124,10 @@ private fun BusinessProfile(
                 if (state.saving) {
                     CircularProgressIndicator(Modifier.heightIn(max = 18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Finish setup")
+                    Text(stringResource(R.string.onboarding_finish_setup))
                 }
             }
-            TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
+            TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_back)) }
         }
     }
 }

@@ -41,7 +41,9 @@ fun VisitSummary.toDomain(): Visit = Visit(
     petId = petId,
     startedAt = startedAt,
     endedAt = endedAt,
-    total = total
+    total = total,
+    beforeThumb = beforeThumbnailData,
+    afterThumb = afterThumbnailData
 )
 
 fun PetWithVisitSummaries.toDomain(): Pet = Pet(

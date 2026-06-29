@@ -21,7 +21,11 @@ data class CheckoutRequest(
     val tip: BigDecimal = BigDecimal.ZERO,
     val method: PaymentMethod = PaymentMethod.CASH,
     val externalReference: String? = null,
-    val note: String? = null
+    val note: String? = null,
+    val beforePhoto: ByteArray? = null,
+    val beforeThumb: ByteArray? = null,
+    val afterPhoto: ByteArray? = null,
+    val afterThumb: ByteArray? = null
 )
 
 data class CheckoutResult(

@@ -23,9 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.pawtrackr.R
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -43,7 +45,7 @@ fun DashboardScreen(viewModel: DashboardViewModel, modifier: Modifier = Modifier
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Dashboard") }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.dashboard_title)) }) }
     ) { padding ->
         if (state.loading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -54,24 +56,24 @@ fun DashboardScreen(viewModel: DashboardViewModel, modifier: Modifier = Modifier
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Text("Today", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.dashboard_today), style = MaterialTheme.typography.titleMedium)
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(20.dp)) {
-                        Text("Revenue today", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.dashboard_revenue_today), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(money(state.todayRevenue), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = PRIMARY_BLUE)
                     }
                 }
             }
             item {
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    KpiCard("In session", state.inSessionCount.toString(), MaterialTheme.colorScheme.primary)
-                    KpiCard("Needs attention", state.needsAttentionCount.toString(), if (state.needsAttentionCount > 0) OVERDUE_RED else MaterialTheme.colorScheme.onSurface)
-                    KpiCard("Clients", state.clientCount.toString(), MaterialTheme.colorScheme.onSurface)
+                    KpiCard(stringResource(R.string.dashboard_in_session), state.inSessionCount.toString(), MaterialTheme.colorScheme.primary)
+                    KpiCard(stringResource(R.string.dashboard_needs_attention), state.needsAttentionCount.toString(), if (state.needsAttentionCount > 0) OVERDUE_RED else MaterialTheme.colorScheme.onSurface)
+                    KpiCard(stringResource(R.string.dashboard_clients), state.clientCount.toString(), MaterialTheme.colorScheme.onSurface)
                 }
             }
-            item { Text("Recent activity", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp)) }
+            item { Text(stringResource(R.string.dashboard_recent_activity), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp)) }
             if (state.recent.isEmpty()) {
-                item { Text("No activity yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                item { Text(stringResource(R.string.dashboard_no_activity), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             } else {
                 items(state.recent, key = { it.id }) { r ->
                     Card(Modifier.fillMaxWidth()) {
@@ -80,7 +82,7 @@ fun DashboardScreen(viewModel: DashboardViewModel, modifier: Modifier = Modifier
                                 Text("${r.petName} · ${r.clientName}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                                 Text(timeFmt.format(Instant.ofEpochMilli(r.whenMs)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            if (r.isActive) Text("In session", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                            if (r.isActive) Text(stringResource(R.string.dashboard_in_session), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                             else Text(money(r.total), fontWeight = FontWeight.Bold)
                         }
                     }

@@ -1,3 +1,68 @@
 <resources>
     <string name="app_name">pawtrackr</string>
+
+    <!-- Shared actions -->
+    <string name="action_back">Back</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_revenue_today">Revenue today</string>
+    <string name="dashboard_in_session">In session</string>
+    <string name="dashboard_needs_attention">Needs attention</string>
+    <string name="dashboard_clients">Clients</string>
+    <string name="dashboard_recent_activity">Recent activity</string>
+    <string name="dashboard_no_activity">No activity yet.</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Insights</string>
+    <string name="insights_empty">No completed visits yet.</string>
+    <string name="insights_total_revenue">Total revenue</string>
+    <string name="insights_visits">Visits</string>
+    <string name="insights_avg_ticket">Avg ticket</string>
+    <string name="insights_revenue_recent_days">Revenue (recent days)</string>
+    <string name="insights_top_services">Top services</string>
+    <string name="insights_by_category">By category</string>
+    <string name="insights_top_clients">Top clients</string>
+    <string name="insights_no_revenue">No revenue yet.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_business_profile">Business profile</string>
+    <string name="settings_business_name_label">Business name *</string>
+    <string name="settings_email_label">Email</string>
+    <string name="settings_phone_label">Phone</string>
+    <string name="settings_address_label">Address</string>
+    <string name="settings_saved">Saved ✓</string>
+    <string name="settings_save_changes">Save changes</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_subtitle">Run your pet-grooming business — clients, pets, checkout, and insights, all in one place.</string>
+    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_business_title">Your business</string>
+    <string name="onboarding_business_subtitle">Tell us a bit about your shop. You can change this later in Settings.</string>
+    <string name="onboarding_business_name_label">Business name *</string>
+    <string name="onboarding_email_label">Email</string>
+    <string name="onboarding_phone_label">Phone</string>
+    <string name="onboarding_address_label">Address</string>
+    <string name="onboarding_finish_setup">Finish setup</string>
+
+    <!-- Checkout -->
+    <string name="checkout_title">Checkout</string>
+    <string name="checkout_services">Services</string>
+    <string name="checkout_custom_total_label">Custom total (optional)</string>
+    <string name="checkout_custom_total_placeholder">Overrides the services subtotal</string>
+    <string name="checkout_custom_total_badge">custom total</string>
+    <string name="checkout_photos">Photos</string>
+    <string name="checkout_add_before">Add before</string>
+    <string name="checkout_before_done">Before ✓</string>
+    <string name="checkout_add_after">Add after</string>
+    <string name="checkout_after_done">After ✓</string>
+    <string name="checkout_payment">Payment</string>
+    <string name="checkout_tip">Tip</string>
+    <string name="checkout_no_tip">No tip</string>
+    <string name="checkout_total">Total</string>
+    <string name="checkout_confirm_pay">Confirm &amp; Pay %1$s</string>
+    <string name="checkout_transaction_id">Transaction ID</string>
+    <string name="checkout_last_4">Last 4 digits</string>
 </resources>
