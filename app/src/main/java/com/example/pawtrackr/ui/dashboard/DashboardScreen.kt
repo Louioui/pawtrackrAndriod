@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -22,12 +22,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pawtrackr.R
+import com.example.pawtrackr.ui.components.PawtrackrAccentEdge
+import com.example.pawtrackr.ui.components.PawtrackrCard
+import com.example.pawtrackr.ui.components.PawtrackrChip
+import com.example.pawtrackr.ui.components.PawtrackrChipTone
+import com.example.pawtrackr.ui.components.PawtrackrEmptyState
+import com.example.pawtrackr.ui.components.PawtrackrKpiCard
+import com.example.pawtrackr.ui.components.PawtrackrSectionTitle
+import com.example.pawtrackr.ui.theme.PawtrackrSemanticColor
+import com.example.pawtrackr.ui.theme.PawtrackrStaticColor
+import com.example.pawtrackr.ui.theme.PawtrackrTokens
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -36,8 +45,6 @@ import java.time.format.DateTimeFormatter
 
 private fun money(v: BigDecimal): String = "$" + v.setScale(2, RoundingMode.HALF_UP).toPlainString()
 private val timeFmt = DateTimeFormatter.ofPattern("MMM d, h:mm a").withZone(ZoneId.systemDefault())
-private val PRIMARY_BLUE = Color(0xFF3700B3)
-private val OVERDUE_RED = Color(0xFFC62828)
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel, modifier: Modifier = Modifier) {
@@ -52,40 +59,67 @@ fun DashboardScreen(viewModel: DashboardViewModel, modifier: Modifier = Modifier
             return@Scaffold
         }
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.lg)
         ) {
             item {
-                Text(stringResource(R.string.dashboard_today), style = MaterialTheme.typography.titleMedium)
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(20.dp)) {
-                        Text(stringResource(R.string.dashboard_revenue_today), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(money(state.todayRevenue), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = PRIMARY_BLUE)
-                    }
+                TodaySummaryCard(
+                    revenue = money(state.todayRevenue),
+                    inSession = state.inSessionCount,
+                    needsAttention = state.needsAttentionCount
+                )
+            }
+            item {
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md),
+                    verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)
+                ) {
+                    PawtrackrKpiCard(
+                        label = stringResource(R.string.dashboard_in_session),
+                        value = state.inSessionCount.toString(),
+                        accentColor = PawtrackrSemanticColor.Success,
+                        modifier = Modifier.weight(1f).widthIn(min = 136.dp)
+                    )
+                    PawtrackrKpiCard(
+                        label = stringResource(R.string.dashboard_needs_attention),
+                        value = state.needsAttentionCount.toString(),
+                        accentColor = if (state.needsAttentionCount > 0) PawtrackrSemanticColor.Danger else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f).widthIn(min = 136.dp)
+                    )
+                    PawtrackrKpiCard(
+                        label = stringResource(R.string.dashboard_clients),
+                        value = state.clientCount.toString(),
+                        accentColor = PawtrackrStaticColor.BrandPrimary,
+                        modifier = Modifier.weight(1f).widthIn(min = 136.dp)
+                    )
                 }
             }
             item {
-                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    KpiCard(stringResource(R.string.dashboard_in_session), state.inSessionCount.toString(), MaterialTheme.colorScheme.primary)
-                    KpiCard(stringResource(R.string.dashboard_needs_attention), state.needsAttentionCount.toString(), if (state.needsAttentionCount > 0) OVERDUE_RED else MaterialTheme.colorScheme.onSurface)
-                    KpiCard(stringResource(R.string.dashboard_clients), state.clientCount.toString(), MaterialTheme.colorScheme.onSurface)
-                }
-            }
-            item { Text(stringResource(R.string.dashboard_recent_activity), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp)) }
-            if (state.recent.isEmpty()) {
-                item { Text(stringResource(R.string.dashboard_no_activity), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            } else {
-                items(state.recent, key = { it.id }) { r ->
-                    Card(Modifier.fillMaxWidth()) {
-                        Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text("${r.petName} · ${r.clientName}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                                Text(timeFmt.format(Instant.ofEpochMilli(r.whenMs)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            if (r.isActive) Text(stringResource(R.string.dashboard_in_session), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-                            else Text(money(r.total), fontWeight = FontWeight.Bold)
+                PawtrackrSectionTitle(
+                    title = stringResource(R.string.dashboard_recent_activity),
+                    trailing = {
+                        if (state.recent.isNotEmpty()) {
+                            PawtrackrChip(
+                                label = state.recent.size.toString(),
+                                tone = PawtrackrChipTone.Brand
+                            )
                         }
                     }
+                )
+            }
+            if (state.recent.isEmpty()) {
+                item {
+                    PawtrackrCard(Modifier.fillMaxWidth()) {
+                        PawtrackrEmptyState(
+                            title = stringResource(R.string.dashboard_no_activity),
+                            body = stringResource(R.string.dashboard_no_activity)
+                        )
+                    }
+                }
+            } else {
+                items(state.recent, key = { it.id }) { r ->
+                    RecentActivityCard(row = r)
                 }
             }
         }
@@ -93,13 +127,86 @@ fun DashboardScreen(viewModel: DashboardViewModel, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun KpiCard(label: String, value: String, accent: Color) {
-    Card {
-        Column(Modifier.padding(16.dp).widthInKpi()) {
-            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = accent)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun TodaySummaryCard(
+    revenue: String,
+    inSession: Int,
+    needsAttention: Int
+) {
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth(),
+        accentColor = PawtrackrStaticColor.BrandPrimary,
+        accentEdge = PawtrackrAccentEdge.Top
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+            Column {
+                Text(
+                    text = stringResource(R.string.dashboard_today),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.dashboard_revenue_today),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = revenue,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = PawtrackrStaticColor.BrandPrimary
+                )
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm),
+                verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)
+            ) {
+                PawtrackrChip(
+                    label = "$inSession ${stringResource(R.string.dashboard_in_session)}",
+                    tone = PawtrackrChipTone.Success
+                )
+                PawtrackrChip(
+                    label = "$needsAttention ${stringResource(R.string.dashboard_needs_attention)}",
+                    tone = if (needsAttention > 0) PawtrackrChipTone.Danger else PawtrackrChipTone.Neutral
+                )
+            }
         }
     }
 }
 
-private fun Modifier.widthInKpi(): Modifier = this.then(Modifier.padding(end = 8.dp))
+@Composable
+private fun RecentActivityCard(row: RecentVisit) {
+    val accent = if (row.isActive) PawtrackrSemanticColor.Success else PawtrackrStaticColor.BrandPrimary
+
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth(),
+        accentColor = accent
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
+                Text(
+                    "${row.petName} / ${row.clientName}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    timeFmt.format(Instant.ofEpochMilli(row.whenMs)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (row.isActive) {
+                PawtrackrChip(
+                    label = stringResource(R.string.dashboard_in_session),
+                    tone = PawtrackrChipTone.Success
+                )
+            } else {
+                Text(
+                    money(row.total),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
