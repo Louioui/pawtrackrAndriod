@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+      Compose draws the entire UI; this XML theme only configures the window/launch
+      appearance. Parenting on a platform NoActionBar theme avoids a dependency on
+      AppCompat or the Material Components view library.
+    -->
+    <style name="Theme.Pawtrackr" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/purple_700</item>
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+</resources>
