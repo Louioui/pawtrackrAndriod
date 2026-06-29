@@ -120,13 +120,17 @@ fun InsightsScreen(viewModel: InsightsViewModel, modifier: Modifier = Modifier) 
                                         Text(c.name, fontWeight = FontWeight.SemiBold)
                                         if (c.isChurnRisk) {
                                             PawtrackrChip(
-                                                label = "At risk",
+                                                label = stringResource(R.string.insights_at_risk),
                                                 tone = PawtrackrChipTone.Warning
                                             )
                                         }
                                     }
                                     Text(
-                                        "${c.visitCount} visit${if (c.visitCount == 1) "" else "s"}",
+                                        if (c.visitCount == 1) {
+                                            stringResource(R.string.insights_visit_count_singular)
+                                        } else {
+                                            stringResource(R.string.insights_visit_count_plural, c.visitCount)
+                                        },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

@@ -20,8 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.pawtrackr.R
 import com.example.pawtrackr.domain.messaging.MessageProcessor
 import com.example.pawtrackr.domain.model.MessageTemplate
 
@@ -41,10 +43,10 @@ fun MessageSheet(
     val context = LocalContext.current
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-            Text("Message $ownerName", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.message_sheet_title, ownerName), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(
-                if (phone.isNullOrBlank()) "No phone number on file — the message app will open without a recipient."
-                else "Opens your messaging app pre-filled. Tap a template:",
+                if (phone.isNullOrBlank()) stringResource(R.string.message_no_phone)
+                else stringResource(R.string.message_template_prompt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

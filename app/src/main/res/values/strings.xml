@@ -8,6 +8,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_edit">Edit</string>
     <string name="action_save">Save</string>
+    <string name="action_clear_search">Clear search</string>
     <string name="nav_home">Home</string>
     <string name="nav_clients">Clients</string>
     <string name="nav_insights">Insights</string>
@@ -34,6 +35,9 @@
     <string name="insights_by_category">By category</string>
     <string name="insights_top_clients">Top clients</string>
     <string name="insights_no_revenue">No revenue yet.</string>
+    <string name="insights_at_risk">At risk</string>
+    <string name="insights_visit_count_singular">1 visit</string>
+    <string name="insights_visit_count_plural">%1$d visits</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -88,6 +92,11 @@
     <string name="checkout_selected_count">%1$d selected</string>
     <string name="checkout_subtotal">Subtotal</string>
     <string name="checkout_tip_line">Tip</string>
+    <string name="payment_cash">Cash</string>
+    <string name="payment_debit">Debit</string>
+    <string name="payment_credit">Credit</string>
+    <string name="payment_zelle">Zelle</string>
+    <string name="payment_other">Other</string>
 
     <!-- Clients -->
     <string name="clients_title">Clients</string>
@@ -135,4 +144,16 @@
     <string name="clients_email">Email</string>
     <string name="clients_name">Name</string>
     <string name="clients_breed_optional">Breed (optional)</string>
+    <string name="clients_filter_all">All</string>
+    <string name="clients_filter_active">Active</string>
+    <string name="clients_filter_needs_attention">Needs Attention</string>
+    <string name="clients_filter_missing_info">Missing Info</string>
+    <string name="clients_sort_name">Name</string>
+    <string name="clients_sort_last_visit">Last Visit</string>
+    <string name="clients_sort_newest">Newest</string>
+
+    <!-- Messaging -->
+    <string name="message_sheet_title">Message %1$s</string>
+    <string name="message_no_phone">No phone number on file - the message app will open without a recipient.</string>
+    <string name="message_template_prompt">Opens your messaging app pre-filled. Tap a template:</string>
 </resources>

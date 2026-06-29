@@ -57,15 +57,6 @@ import java.math.RoundingMode
 
 private fun money(v: BigDecimal): String = "$" + v.setScale(2, RoundingMode.HALF_UP).toPlainString()
 
-private val PaymentMethod.label: String
-    get() = when (this) {
-        PaymentMethod.CASH -> "Cash"
-        PaymentMethod.DEBIT_CARD -> "Debit"
-        PaymentMethod.CREDIT_CARD -> "Credit"
-        PaymentMethod.ZELLE -> "Zelle"
-        PaymentMethod.OTHER -> "Other"
-    }
-
 @Composable
 fun CheckoutSheet(
     viewModel: CheckoutViewModel,
@@ -226,7 +217,7 @@ private fun PaymentStep(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
                 PaymentMethod.entries.forEach { m ->
                     PawtrackrChip(
-                        label = m.label,
+                        label = paymentMethodLabel(m),
                         tone = if (state.method == m) PawtrackrChipTone.Success else PawtrackrChipTone.Neutral,
                         style = if (state.method == m) PawtrackrChipStyle.Filled else PawtrackrChipStyle.Outline,
                         onClick = { onMethod(m) }
@@ -256,6 +247,16 @@ private fun PaymentStep(
         }
     }
 }
+
+@Composable
+private fun paymentMethodLabel(method: PaymentMethod): String =
+    when (method) {
+        PaymentMethod.CASH -> stringResource(R.string.payment_cash)
+        PaymentMethod.DEBIT_CARD -> stringResource(R.string.payment_debit)
+        PaymentMethod.CREDIT_CARD -> stringResource(R.string.payment_credit)
+        PaymentMethod.ZELLE -> stringResource(R.string.payment_zelle)
+        PaymentMethod.OTHER -> stringResource(R.string.payment_other)
+    }
 
 @Composable
 private fun ReviewStep(

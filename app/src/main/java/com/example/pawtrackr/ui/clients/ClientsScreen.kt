@@ -280,7 +280,7 @@ private fun ClientsListPane(
             ) {
                 ClientFilter.entries.forEach { f ->
                     PawtrackrChip(
-                        label = f.label,
+                        label = clientFilterLabel(f),
                         tone = if (state.filter == f) PawtrackrChipTone.Brand else PawtrackrChipTone.Neutral,
                         style = if (state.filter == f) PawtrackrChipStyle.Filled else PawtrackrChipStyle.Outline,
                         onClick = { viewModel.setFilter(f) },
@@ -388,11 +388,11 @@ private fun ClientRow(client: Client, selected: Boolean, now: Long, onClick: () 
 private fun SortMenu(current: ClientSort, onPick: (ClientSort) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { open = true }) { Text(stringResource(R.string.clients_sort_prefix, current.label)) }
+        TextButton(onClick = { open = true }) { Text(stringResource(R.string.clients_sort_prefix, clientSortLabel(current))) }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             ClientSort.entries.forEach { s ->
                 DropdownMenuItem(
-                    text = { Text(s.label + if (s == current) "  ✓" else "") },
+                    text = { Text(clientSortLabel(s) + if (s == current) "  ✓" else "") },
                     onClick = { onPick(s); open = false }
                 )
             }
@@ -436,6 +436,23 @@ private fun DetailPane(
         )
     }
 }
+
+@Composable
+private fun clientFilterLabel(filter: ClientFilter): String =
+    when (filter) {
+        ClientFilter.ALL -> stringResource(R.string.clients_filter_all)
+        ClientFilter.ACTIVE -> stringResource(R.string.clients_filter_active)
+        ClientFilter.NEEDS_ATTENTION -> stringResource(R.string.clients_filter_needs_attention)
+        ClientFilter.MISSING_INFO -> stringResource(R.string.clients_filter_missing_info)
+    }
+
+@Composable
+private fun clientSortLabel(sort: ClientSort): String =
+    when (sort) {
+        ClientSort.NAME -> stringResource(R.string.clients_sort_name)
+        ClientSort.LAST_VISIT -> stringResource(R.string.clients_sort_last_visit)
+        ClientSort.NEWEST -> stringResource(R.string.clients_sort_newest)
+    }
 
 @Composable
 private fun petCountLabel(count: Int): String =

@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class ClientFilter(val label: String) { ALL("All"), ACTIVE("Active"), NEEDS_ATTENTION("Needs Attention"), MISSING_INFO("Missing Info") }
-enum class ClientSort(val label: String) { NAME("Name"), LAST_VISIT("Last Visit"), NEWEST("Newest") }
+enum class ClientFilter { ALL, ACTIVE, NEEDS_ATTENTION, MISSING_INFO }
+enum class ClientSort { NAME, LAST_VISIT, NEWEST }
 
 /** Sectioned, filtered, sorted client list for the dashboard. */
 data class ClientsUiState(
