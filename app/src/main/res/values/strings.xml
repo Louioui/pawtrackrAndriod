@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">pawtrackr</string>
+    <string name="app_name">Pawtrackr</string>
 
     <!-- Shared actions -->
     <string name="action_back">Back</string>
@@ -8,6 +8,10 @@
     <string name="action_delete">Delete</string>
     <string name="action_edit">Edit</string>
     <string name="action_save">Save</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_clients">Clients</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_settings">Settings</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>
