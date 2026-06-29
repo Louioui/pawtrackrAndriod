@@ -115,6 +115,13 @@ data class Pet(
     }
 }
 
+data class MessageTemplate(
+    val id: String,
+    val title: String,
+    val content: String,
+    val typeRaw: String
+)
+
 data class BusinessConfig(
     val id: String,
     val name: String,

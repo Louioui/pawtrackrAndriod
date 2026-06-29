@@ -107,6 +107,8 @@ fun ClientsScreen(
     var deleteClientConfirm by remember { mutableStateOf<Client?>(null) }
     var editPet by remember { mutableStateOf<Pet?>(null) }
     var deletePetConfirm by remember { mutableStateOf<Pet?>(null) }
+    var messageClient by remember { mutableStateOf<Client?>(null) }
+    val templates by viewModel.templates.collectAsStateWithLifecycle()
 
     val onCheckIn: (String) -> Unit = viewModel::checkIn
     val onStartCheckout: (Pet) -> Unit = { pet ->
@@ -151,7 +153,8 @@ fun ClientsScreen(
                     Box(Modifier.weight(1.6f).fillMaxHeight().padding(start = 8.dp)) {
                         DetailPane(selectedClient, selectedPet, viewModel, now, { addPetForClientId = it }, onCheckIn, onStartCheckout,
                             onEditClient = { editClient = it }, onDeleteClient = { deleteClientConfirm = it },
-                            onEditPet = { editPet = it }, onDeletePet = { deletePetConfirm = it })
+                            onEditPet = { editPet = it }, onDeletePet = { deletePetConfirm = it },
+                            onMessageClient = { messageClient = it })
                     }
                 }
             } else {
@@ -160,7 +163,8 @@ fun ClientsScreen(
                 } else {
                     DetailPane(selectedClient, selectedPet, viewModel, now, { addPetForClientId = it }, onCheckIn, onStartCheckout,
                             onEditClient = { editClient = it }, onDeleteClient = { deleteClientConfirm = it },
-                            onEditPet = { editPet = it }, onDeletePet = { deletePetConfirm = it })
+                            onEditPet = { editPet = it }, onDeletePet = { deletePetConfirm = it },
+                            onMessageClient = { messageClient = it })
                 }
             }
         }
@@ -214,6 +218,15 @@ fun ClientsScreen(
             message = "This removes the pet and its visit history.",
             onDismiss = { deletePetConfirm = null },
             onConfirm = { viewModel.deletePet(p.id); deletePetConfirm = null }
+        )
+    }
+    messageClient?.let { c ->
+        MessageSheet(
+            templates = templates,
+            ownerName = c.firstName.ifBlank { c.fullName },
+            petName = c.pets.firstOrNull()?.name,
+            phone = c.phone,
+            onDismiss = { messageClient = null }
         )
     }
     checkoutTarget?.let { target ->
@@ -356,7 +369,8 @@ private fun DetailPane(
     onEditClient: (Client) -> Unit,
     onDeleteClient: (Client) -> Unit,
     onEditPet: (Pet) -> Unit,
-    onDeletePet: (Pet) -> Unit
+    onDeletePet: (Pet) -> Unit,
+    onMessageClient: (Client) -> Unit
 ) {
     when {
         client == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -374,7 +388,8 @@ private fun DetailPane(
             onSelectPet = viewModel::selectPet,
             onAddPet = { onAddPet(client.id) },
             onEdit = { onEditClient(client) },
-            onDelete = { onDeleteClient(client) }
+            onDelete = { onDeleteClient(client) },
+            onMessage = { onMessageClient(client) }
         )
     }
 }
@@ -386,7 +401,8 @@ private fun ClientDetailPane(
     onSelectPet: (String) -> Unit,
     onAddPet: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onMessage: () -> Unit
 ) {
     val revenue = client.pets.fold(BigDecimal.ZERO) { acc, p -> acc + p.lifetimeValue }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -399,6 +415,7 @@ private fun ClientDetailPane(
                 if (client.hasMissingInfo) AssistChip(onClick = {}, label = { Text("Missing info") })
             }
             Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onMessage) { Text("Message") }
                 TextButton(onClick = onEdit) { Text("Edit") }
                 TextButton(onClick = onDelete) { Text("Delete", color = AGGRESSIVE_RED) }
             }

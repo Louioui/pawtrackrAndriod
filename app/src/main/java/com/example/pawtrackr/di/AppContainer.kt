@@ -5,6 +5,7 @@ import com.example.pawtrackr.data.local.PawtrackrDatabase
 import com.example.pawtrackr.data.repository.BusinessConfigRepository
 import com.example.pawtrackr.data.repository.CheckoutRepository
 import com.example.pawtrackr.data.repository.ClientRepository
+import com.example.pawtrackr.data.repository.MessageTemplateRepository
 import com.example.pawtrackr.data.repository.PetRepository
 import com.example.pawtrackr.data.repository.ServiceRepository
 import com.example.pawtrackr.data.repository.SummaryRepository
@@ -28,6 +29,7 @@ class AppContainer(context: Context) {
     val visitRepository: VisitRepository = VisitRepository(database.visitDao())
     val summaryRepository: SummaryRepository = SummaryRepository(database, currentUserId)
     val businessConfigRepository: BusinessConfigRepository = BusinessConfigRepository(database.businessConfigDao())
+    val messageTemplateRepository: MessageTemplateRepository = MessageTemplateRepository(database.messageTemplateDao())
     val checkoutRepository: CheckoutRepository = CheckoutRepository(database, summaryRepository)
     val debugSeeder: DebugSeeder = DebugSeeder(database, currentUserId)
 }

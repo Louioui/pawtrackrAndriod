@@ -4,6 +4,7 @@ import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.lifecycle.lifecycleScope
@@ -17,11 +18,13 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge() // draw behind the system bars (modern Android look)
         val container = (application as PawtrackrApplication).container
 
         lifecycleScope.launch {
-            // The service catalog is core data — always ensure it exists.
+            // The service catalog + message templates are core data — always ensure they exist.
             container.serviceRepository.seedDefaultsIfEmpty()
+            container.messageTemplateRepository.seedDefaultsIfEmpty()
             // Sample clients/pets/visits only in debug, so the screen shows something real.
             if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
                 container.debugSeeder.seedIfEmpty(System.currentTimeMillis())

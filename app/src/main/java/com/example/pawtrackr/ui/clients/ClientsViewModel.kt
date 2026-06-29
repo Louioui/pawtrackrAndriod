@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.pawtrackr.data.repository.ClientRepository
+import com.example.pawtrackr.data.repository.MessageTemplateRepository
 import com.example.pawtrackr.data.repository.PetRepository
 import com.example.pawtrackr.data.repository.VisitRepository
 import com.example.pawtrackr.domain.model.Client
+import com.example.pawtrackr.domain.model.MessageTemplate
 import com.example.pawtrackr.domain.model.PetGender
 import com.example.pawtrackr.domain.model.Species
 import com.example.pawtrackr.domain.text.SearchNormalizer
@@ -43,9 +45,14 @@ class ClientsViewModel(
     private val clientRepository: ClientRepository,
     private val petRepository: PetRepository,
     private val visitRepository: VisitRepository,
+    private val messageTemplateRepository: MessageTemplateRepository,
     private val currentUserId: String,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
+
+    val templates: StateFlow<List<MessageTemplate>> =
+        messageTemplateRepository.watchTemplates()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val query = MutableStateFlow("")
     private val filter = MutableStateFlow(ClientFilter.ALL)
@@ -156,6 +163,7 @@ class ClientsViewModel(
         private val clientRepository: ClientRepository,
         private val petRepository: PetRepository,
         private val visitRepository: VisitRepository,
+        private val messageTemplateRepository: MessageTemplateRepository,
         private val currentUserId: String
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -163,7 +171,7 @@ class ClientsViewModel(
             require(modelClass.isAssignableFrom(ClientsViewModel::class.java)) {
                 "Unknown ViewModel class: ${modelClass.name}"
             }
-            return ClientsViewModel(clientRepository, petRepository, visitRepository, currentUserId) as T
+            return ClientsViewModel(clientRepository, petRepository, visitRepository, messageTemplateRepository, currentUserId) as T
         }
     }
 }

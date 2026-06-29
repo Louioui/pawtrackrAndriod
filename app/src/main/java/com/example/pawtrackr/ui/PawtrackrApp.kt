@@ -72,6 +72,7 @@ fun PawtrackrApp(
                         clientRepository = container.clientRepository,
                         petRepository = container.petRepository,
                         visitRepository = container.visitRepository,
+                        messageTemplateRepository = container.messageTemplateRepository,
                         currentUserId = container.currentUserId
                     )
                 )

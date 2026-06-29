@@ -1,12 +1,14 @@
 package com.example.pawtrackr.data.mapper
 
 import com.example.pawtrackr.data.local.entities.BusinessConfigEntity
+import com.example.pawtrackr.data.local.entities.MessageTemplateEntity
 import com.example.pawtrackr.data.local.entities.ServiceEntity
 import com.example.pawtrackr.data.local.relations.ClientGraph
 import com.example.pawtrackr.data.local.relations.PetWithVisitSummaries
 import com.example.pawtrackr.data.local.relations.VisitSummary
 import com.example.pawtrackr.domain.model.BusinessConfig
 import com.example.pawtrackr.domain.model.Client
+import com.example.pawtrackr.domain.model.MessageTemplate
 import com.example.pawtrackr.domain.model.Pet
 import com.example.pawtrackr.domain.model.Service
 import com.example.pawtrackr.domain.model.Visit
@@ -16,6 +18,13 @@ import java.math.BigDecimal
  * Entity/relation → domain mappers. Keeps Room entities out of the UI layer (per the
  * iOS mandate: entities are separate from UI state via mappers).
  */
+
+fun MessageTemplateEntity.toDomain(): MessageTemplate = MessageTemplate(
+    id = id,
+    title = title,
+    content = content,
+    typeRaw = typeRaw
+)
 
 fun BusinessConfigEntity.toDomain(): BusinessConfig = BusinessConfig(
     id = id,

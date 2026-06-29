@@ -15,6 +15,12 @@ interface MessageTemplateDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: MessageTemplateEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<MessageTemplateEntity>)
+
+    @Query("SELECT COUNT(*) FROM message_templates")
+    suspend fun count(): Int
+
     @Query("SELECT * FROM message_templates WHERE id = :id")
     suspend fun getById(id: String): MessageTemplateEntity?
 
