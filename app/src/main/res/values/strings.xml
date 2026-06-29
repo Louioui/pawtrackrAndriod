@@ -3,6 +3,11 @@
 
     <!-- Shared actions -->
     <string name="action_back">Back</string>
+    <string name="action_add">Add</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_save">Save</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>
@@ -65,4 +70,58 @@
     <string name="checkout_confirm_pay">Confirm &amp; Pay %1$s</string>
     <string name="checkout_transaction_id">Transaction ID</string>
     <string name="checkout_last_4">Last 4 digits</string>
+    <string name="checkout_step_services">1. Services</string>
+    <string name="checkout_step_details">2. Details</string>
+    <string name="checkout_step_payment">3. Payment</string>
+    <string name="checkout_step_review">4. Review</string>
+    <string name="checkout_selected_count">%1$d selected</string>
+    <string name="checkout_subtotal">Subtotal</string>
+    <string name="checkout_tip_line">Tip</string>
+
+    <!-- Clients -->
+    <string name="clients_title">Clients</string>
+    <string name="clients_search_placeholder">Search clients &amp; pets</string>
+    <string name="clients_empty_title">No clients match.</string>
+    <string name="clients_empty_body">Try a different search or add a new client.</string>
+    <string name="clients_section_in_session">In Session</string>
+    <string name="clients_section_needs_attention">Needs Attention</string>
+    <string name="clients_section_all_clients">All Clients</string>
+    <string name="clients_sort_prefix">Sort: %1$s</string>
+    <string name="clients_no_contact">No contact info</string>
+    <string name="clients_pet_count_singular">1 pet</string>
+    <string name="clients_pet_count_plural">%1$d pets</string>
+    <string name="clients_status_in_session">In session</string>
+    <string name="clients_status_overdue">Overdue</string>
+    <string name="clients_aggressive_pet">Aggressive pet</string>
+    <string name="clients_missing_info">Missing info</string>
+    <string name="clients_select_client">Select a client</string>
+    <string name="clients_message">Message</string>
+    <string name="clients_pets">Pets</string>
+    <string name="clients_visits">Visits</string>
+    <string name="clients_revenue">Revenue</string>
+    <string name="clients_lifetime">Lifetime</string>
+    <string name="clients_add_pet">Add pet</string>
+    <string name="clients_no_pets">No pets yet.</string>
+    <string name="clients_age_prefix">Age: %1$s</string>
+    <string name="clients_check_in">Check in</string>
+    <string name="clients_checkout_end_session">Checkout - end session</string>
+    <string name="clients_safety_banner">Handle with care - flagged aggressive</string>
+    <string name="clients_visit_history">Visit history</string>
+    <string name="clients_no_visits">No visits yet.</string>
+    <string name="clients_photo_before">Before</string>
+    <string name="clients_photo_after">After</string>
+    <string name="clients_new_client">New client</string>
+    <string name="clients_edit_client">Edit client</string>
+    <string name="clients_delete_client_title">Delete %1$s?</string>
+    <string name="clients_delete_client_message">This also removes their pets and visit history.</string>
+    <string name="clients_new_pet">New pet</string>
+    <string name="clients_edit_pet">Edit pet</string>
+    <string name="clients_delete_pet_title">Delete %1$s?</string>
+    <string name="clients_delete_pet_message">This removes the pet and its visit history.</string>
+    <string name="clients_first_name">First name</string>
+    <string name="clients_last_name">Last name</string>
+    <string name="clients_phone">Phone</string>
+    <string name="clients_email">Email</string>
+    <string name="clients_name">Name</string>
+    <string name="clients_breed_optional">Breed (optional)</string>
 </resources>

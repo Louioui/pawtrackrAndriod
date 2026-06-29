@@ -3,14 +3,9 @@
 package com.example.pawtrackr.ui.clients
 
 import androidx.activity.compose.BackHandler
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -22,25 +17,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,19 +49,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.pawtrackr.ui.checkout.CheckoutSheet
-import com.example.pawtrackr.ui.checkout.CheckoutViewModel
+import com.example.pawtrackr.R
 import com.example.pawtrackr.domain.model.Client
 import com.example.pawtrackr.domain.model.Pet
 import com.example.pawtrackr.domain.model.PetGender
 import com.example.pawtrackr.domain.model.Species
+import com.example.pawtrackr.ui.checkout.CheckoutSheet
+import com.example.pawtrackr.ui.checkout.CheckoutViewModel
+import com.example.pawtrackr.ui.components.PawtrackrAccentEdge
+import com.example.pawtrackr.ui.components.PawtrackrCard
+import com.example.pawtrackr.ui.components.PawtrackrChip
+import com.example.pawtrackr.ui.components.PawtrackrChipStyle
+import com.example.pawtrackr.ui.components.PawtrackrChipTone
+import com.example.pawtrackr.ui.components.PawtrackrEmptyState
+import com.example.pawtrackr.ui.components.PawtrackrFab
+import com.example.pawtrackr.ui.components.PawtrackrKpiCard
+import com.example.pawtrackr.ui.components.PawtrackrPhotoWell
+import com.example.pawtrackr.ui.components.PawtrackrSearchField
+import com.example.pawtrackr.ui.components.PawtrackrSectionTitle
+import com.example.pawtrackr.ui.components.PawtrackrTimelineItem
+import com.example.pawtrackr.ui.theme.PawtrackrSemanticColor
+import com.example.pawtrackr.ui.theme.PawtrackrStaticColor
+import com.example.pawtrackr.ui.theme.PawtrackrTokens
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -79,7 +88,7 @@ import java.time.format.DateTimeFormatter
 private fun money(v: BigDecimal): String = "$" + v.setScale(2, RoundingMode.HALF_UP).toPlainString()
 private val dateFmt = DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneId.systemDefault())
 private fun fmtDate(ms: Long): String = dateFmt.format(Instant.ofEpochMilli(ms))
-private val AGGRESSIVE_RED = Color(0xFFC62828)
+private val AGGRESSIVE_RED = PawtrackrSemanticColor.Danger
 
 private data class CheckoutTarget(val visitId: String, val petId: String, val clientId: String?)
 
@@ -126,21 +135,22 @@ fun ClientsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (!isExpanded && selectedClient != null) selectedClient.fullName else "Clients") },
+                title = { Text(if (!isExpanded && selectedClient != null) selectedClient.fullName else stringResource(R.string.clients_title)) },
                 navigationIcon = {
                     if (!isExpanded && selectedClientId != null) {
                         IconButton(onClick = {
                             if (selectedPetId != null) viewModel.selectPet(null) else viewModel.clearClientSelection()
-                        }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                        }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back)) }
                     }
                 }
             )
         },
         floatingActionButton = {
             if (isExpanded || selectedClientId == null) {
-                FloatingActionButton(onClick = { showAddClient = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add client")
-                }
+                PawtrackrFab(
+                    label = stringResource(R.string.clients_new_client),
+                    onClick = { showAddClient = true }
+                )
             }
         }
     ) { padding ->
@@ -172,14 +182,14 @@ fun ClientsScreen(
 
     if (showAddClient) {
         ClientFormDialog(
-            title = "New client", confirmLabel = "Add",
+            title = stringResource(R.string.clients_new_client), confirmLabel = stringResource(R.string.action_add),
             onDismiss = { showAddClient = false },
             onConfirm = { f, l, p, e -> viewModel.addClient(f, l, p, e); showAddClient = false }
         )
     }
     editClient?.let { c ->
         ClientFormDialog(
-            title = "Edit client", confirmLabel = "Save",
+            title = stringResource(R.string.clients_edit_client), confirmLabel = stringResource(R.string.action_save),
             initialFirst = c.firstName, initialLast = c.lastName,
             initialPhone = c.phone.orEmpty(), initialEmail = c.email.orEmpty(),
             onDismiss = { editClient = null },
@@ -188,15 +198,15 @@ fun ClientsScreen(
     }
     deleteClientConfirm?.let { c ->
         ConfirmDeleteDialog(
-            title = "Delete ${c.fullName}?",
-            message = "This also removes their pets and visit history.",
+            title = stringResource(R.string.clients_delete_client_title, c.fullName),
+            message = stringResource(R.string.clients_delete_client_message),
             onDismiss = { deleteClientConfirm = null },
             onConfirm = { viewModel.deleteClient(c.id); deleteClientConfirm = null }
         )
     }
     addPetForClientId?.let { ownerId ->
         PetFormDialog(
-            title = "New pet", confirmLabel = "Add",
+            title = stringResource(R.string.clients_new_pet), confirmLabel = stringResource(R.string.action_add),
             onDismiss = { addPetForClientId = null },
             onConfirm = { name, species, gender, breed ->
                 viewModel.addPet(ownerId, name, species, gender, breed); addPetForClientId = null
@@ -205,7 +215,7 @@ fun ClientsScreen(
     }
     editPet?.let { p ->
         PetFormDialog(
-            title = "Edit pet", confirmLabel = "Save",
+            title = stringResource(R.string.clients_edit_pet), confirmLabel = stringResource(R.string.action_save),
             initialName = p.name, initialBreed = p.breed.orEmpty(),
             initialSpecies = p.species, initialGender = p.gender,
             onDismiss = { editPet = null },
@@ -214,8 +224,8 @@ fun ClientsScreen(
     }
     deletePetConfirm?.let { p ->
         ConfirmDeleteDialog(
-            title = "Delete ${p.name}?",
-            message = "This removes the pet and its visit history.",
+            title = stringResource(R.string.clients_delete_pet_title, p.name),
+            message = stringResource(R.string.clients_delete_pet_message),
             onDismiss = { deletePetConfirm = null },
             onConfirm = { viewModel.deletePet(p.id); deletePetConfirm = null }
         )
@@ -250,22 +260,30 @@ private fun ClientsListPane(
     viewModel: ClientsViewModel,
     now: Long
 ) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
-        OutlinedTextField(
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)
+    ) {
+        PawtrackrSearchField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            placeholder = { Text("Search clients & pets") },
-            singleLine = true
+            placeholder = stringResource(R.string.clients_search_placeholder),
+            modifier = Modifier.fillMaxWidth()
         )
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(
+                Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs),
+                verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)
+            ) {
                 ClientFilter.entries.forEach { f ->
-                    FilterChip(
-                        selected = state.filter == f,
+                    PawtrackrChip(
+                        label = f.label,
+                        tone = if (state.filter == f) PawtrackrChipTone.Brand else PawtrackrChipTone.Neutral,
+                        style = if (state.filter == f) PawtrackrChipStyle.Filled else PawtrackrChipStyle.Outline,
                         onClick = { viewModel.setFilter(f) },
-                        label = { Text(f.label) }
                     )
                 }
             }
@@ -276,32 +294,39 @@ private fun ClientsListPane(
         when {
             state.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.isEmpty -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No clients match.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                PawtrackrEmptyState(
+                    title = stringResource(R.string.clients_empty_title),
+                    body = stringResource(R.string.clients_empty_body)
+                )
             }
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                section("In Session", state.inSession, selectedClientId, viewModel, now)
-                section("Needs Attention", state.needsAttention, selectedClientId, viewModel, now)
-                section(if (state.inSession.isEmpty() && state.needsAttention.isEmpty()) "" else "All Clients", state.others, selectedClientId, viewModel, now)
+                section(R.string.clients_section_in_session, state.inSession, selectedClientId, viewModel, now)
+                section(R.string.clients_section_needs_attention, state.needsAttention, selectedClientId, viewModel, now)
+                section(
+                    if (state.inSession.isEmpty() && state.needsAttention.isEmpty()) null else R.string.clients_section_all_clients,
+                    state.others,
+                    selectedClientId,
+                    viewModel,
+                    now
+                )
             }
         }
     }
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.section(
-    title: String,
+    titleRes: Int?,
     clients: List<Client>,
     selectedClientId: String?,
     viewModel: ClientsViewModel,
     now: Long
 ) {
     if (clients.isEmpty()) return
-    if (title.isNotEmpty()) {
-        item(key = "header-$title") {
-            Text(
-                title.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+    if (titleRes != null) {
+        item(key = "header-$titleRes") {
+            PawtrackrSectionTitle(
+                title = stringResource(titleRes),
+                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
             )
         }
     }
@@ -313,28 +338,46 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ClientRow(client: Client, selected: Boolean, now: Long, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = if (selected) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-        else CardDefaults.cardColors()
+    val accent = clientAccentColor(client, now)
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        accentColor = accent,
+        containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f) else MaterialTheme.colorScheme.surface
     ) {
-        Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+            InitialsAvatar(name = client.fullName)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
                     Text(client.fullName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     if (client.hasAggressivePet) {
-                        Spacer(Modifier.width(6.dp))
-                        Icon(Icons.Default.Warning, contentDescription = "Aggressive pet", tint = AGGRESSIVE_RED, modifier = Modifier.height(18.dp))
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = stringResource(R.string.clients_aggressive_pet),
+                            tint = AGGRESSIVE_RED,
+                            modifier = Modifier.height(18.dp)
+                        )
                     }
                 }
-                val sub = client.primaryContact.ifBlank { "No contact info" }
+                val sub = client.primaryContact.ifBlank { stringResource(R.string.clients_no_contact) }
                 Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (client.pets.isNotEmpty()) {
+                    Text(
+                        client.pets.take(3).joinToString { it.name },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("${client.petCount} ${if (client.petCount == 1) "pet" else "pets"}", style = MaterialTheme.typography.labelMedium)
-                if (client.hasActiveVisit) Text("In session", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                else if (client.needsAttention(now)) Text("Overdue", style = MaterialTheme.typography.labelSmall, color = AGGRESSIVE_RED)
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
+                PawtrackrChip(
+                    label = petCountLabel(client.petCount),
+                    tone = PawtrackrChipTone.Neutral,
+                    style = PawtrackrChipStyle.Outline
+                )
+                when {
+                    client.hasActiveVisit -> PawtrackrChip(stringResource(R.string.clients_status_in_session), tone = PawtrackrChipTone.Success)
+                    client.needsAttention(now) -> PawtrackrChip(stringResource(R.string.clients_status_overdue), tone = PawtrackrChipTone.Danger)
+                }
             }
         }
     }
@@ -345,7 +388,7 @@ private fun ClientRow(client: Client, selected: Boolean, now: Long, onClick: () 
 private fun SortMenu(current: ClientSort, onPick: (ClientSort) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { open = true }) { Text("Sort: ${current.label}") }
+        TextButton(onClick = { open = true }) { Text(stringResource(R.string.clients_sort_prefix, current.label)) }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             ClientSort.entries.forEach { s ->
                 DropdownMenuItem(
@@ -374,7 +417,7 @@ private fun DetailPane(
 ) {
     when {
         client == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Select a client", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.clients_select_client), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         pet != null -> PetDetailPane(
             pet, now,
@@ -395,6 +438,43 @@ private fun DetailPane(
 }
 
 @Composable
+private fun petCountLabel(count: Int): String =
+    if (count == 1) stringResource(R.string.clients_pet_count_singular)
+    else stringResource(R.string.clients_pet_count_plural, count)
+
+private fun clientAccentColor(client: Client, now: Long): Color =
+    when {
+        client.hasAggressivePet -> PawtrackrSemanticColor.Danger
+        client.hasActiveVisit -> PawtrackrSemanticColor.Success
+        client.needsAttention(now) -> PawtrackrSemanticColor.Warning
+        else -> PawtrackrStaticColor.BrandPrimary
+    }
+
+@Composable
+private fun InitialsAvatar(name: String, modifier: Modifier = Modifier) {
+    val initials = name.split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }
+        .ifBlank { "P" }
+
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(PawtrackrStaticColor.BrandPrimary.copy(alpha = 0.14f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initials,
+            style = MaterialTheme.typography.titleSmall,
+            color = PawtrackrStaticColor.BrandPrimary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
 private fun ClientDetailPane(
     client: Client,
     now: Long,
@@ -405,35 +485,71 @@ private fun ClientDetailPane(
     onMessage: () -> Unit
 ) {
     val revenue = client.pets.fold(BigDecimal.ZERO) { acc, p -> acc + p.lifetimeValue }
-    LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
         item {
-            Text(client.fullName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            if (client.primaryContact.isNotBlank()) Text(client.primaryContact, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (client.hasAggressivePet) AssistChip(onClick = {}, label = { Text("Aggressive pet") },
-                    leadingIcon = { Icon(Icons.Default.Warning, null, tint = AGGRESSIVE_RED) })
-                if (client.hasMissingInfo) AssistChip(onClick = {}, label = { Text("Missing info") })
-            }
-            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onMessage) { Text("Message") }
-                TextButton(onClick = onEdit) { Text("Edit") }
-                TextButton(onClick = onDelete) { Text("Delete", color = AGGRESSIVE_RED) }
+            PawtrackrCard(
+                modifier = Modifier.fillMaxWidth(),
+                accentColor = if (client.hasAggressivePet) PawtrackrSemanticColor.Danger else PawtrackrStaticColor.BrandPrimary,
+                accentEdge = PawtrackrAccentEdge.Top
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)
+                    ) {
+                        InitialsAvatar(client.fullName, Modifier.size(52.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(client.fullName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            if (client.primaryContact.isNotBlank()) {
+                                Text(client.primaryContact, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
+                        if (client.hasAggressivePet) {
+                            PawtrackrChip(
+                                label = stringResource(R.string.clients_aggressive_pet),
+                                tone = PawtrackrChipTone.Danger,
+                                leadingIcon = Icons.Default.Warning
+                            )
+                        }
+                        if (client.hasMissingInfo) {
+                            PawtrackrChip(label = stringResource(R.string.clients_missing_info), tone = PawtrackrChipTone.Warning)
+                        }
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
+                        TextButton(onClick = onMessage) { Text(stringResource(R.string.clients_message)) }
+                        TextButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
+                        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = AGGRESSIVE_RED) }
+                    }
+                }
             }
         }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard("Pets", client.petCount.toString(), Modifier.weight(1f))
-                StatCard("Visits", client.pets.sumOf { it.completedVisitCount }.toString(), Modifier.weight(1f))
-                StatCard("Revenue", money(revenue), Modifier.weight(1f))
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+                PawtrackrKpiCard(stringResource(R.string.clients_pets), client.petCount.toString(), Modifier.weight(1f), PawtrackrStaticColor.BrandPrimary)
+                PawtrackrKpiCard(stringResource(R.string.clients_visits), client.pets.sumOf { it.completedVisitCount }.toString(), Modifier.weight(1f), PawtrackrSemanticColor.Info)
+                PawtrackrKpiCard(stringResource(R.string.clients_revenue), money(revenue), Modifier.weight(1f), PawtrackrSemanticColor.Success)
             }
         }
         item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Pets", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                TextButton(onClick = onAddPet) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(4.dp)); Text("Add pet") }
+            PawtrackrSectionTitle(
+                title = stringResource(R.string.clients_pets),
+                trailing = {
+                    TextButton(onClick = onAddPet) {
+                        Icon(Icons.Default.Add, null)
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.clients_add_pet))
+                    }
+                }
+            )
+        }
+        if (client.pets.isEmpty()) item {
+            PawtrackrCard(Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.clients_no_pets), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        if (client.pets.isEmpty()) item { Text("No pets yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(client.pets, key = { it.id }) { p -> PetRow(p, now) { onSelectPet(p.id) } }
     }
 }
@@ -441,21 +557,30 @@ private fun ClientDetailPane(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PetRow(pet: Pet, now: Long, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+    val accent = when {
+        pet.isAggressive -> PawtrackrSemanticColor.Danger
+        pet.hasActiveVisit -> PawtrackrSemanticColor.Success
+        pet.needsAttention(now) -> PawtrackrSemanticColor.Warning
+        else -> PawtrackrStaticColor.BrandPrimary
+    }
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        accentColor = accent
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+            InitialsAvatar(pet.name, Modifier.size(40.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
                     Text(pet.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    if (pet.isAggressive) {
-                        Spacer(Modifier.width(6.dp))
-                        Icon(Icons.Default.Warning, "Aggressive", tint = AGGRESSIVE_RED, modifier = Modifier.height(16.dp))
-                    }
+                    if (pet.isAggressive) Icon(Icons.Default.Warning, stringResource(R.string.clients_aggressive_pet), tint = AGGRESSIVE_RED, modifier = Modifier.height(16.dp))
                 }
                 val age = pet.ageString(now)?.let { " • $it" } ?: ""
                 Text(pet.shortDescriptor + age, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (pet.hasActiveVisit) Text("In session", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-            else if (pet.needsAttention(now)) Text("Overdue", style = MaterialTheme.typography.labelSmall, color = AGGRESSIVE_RED)
+            when {
+                pet.hasActiveVisit -> PawtrackrChip(stringResource(R.string.clients_status_in_session), tone = PawtrackrChipTone.Success)
+                pet.needsAttention(now) -> PawtrackrChip(stringResource(R.string.clients_status_overdue), tone = PawtrackrChipTone.Warning)
+            }
         }
     }
 }
@@ -469,94 +594,105 @@ private fun PetDetailPane(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
         item {
-            Text(pet.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(pet.shortDescriptor, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            pet.ageString(now)?.let { Text("Age: $it", style = MaterialTheme.typography.bodyMedium) }
-            Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onEdit) { Text("Edit") }
-                TextButton(onClick = onDelete) { Text("Delete", color = AGGRESSIVE_RED) }
+            PawtrackrCard(
+                modifier = Modifier.fillMaxWidth(),
+                accentColor = if (pet.isAggressive) PawtrackrSemanticColor.Danger else PawtrackrStaticColor.BrandPrimary,
+                accentEdge = PawtrackrAccentEdge.Top
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+                        InitialsAvatar(pet.name, Modifier.size(52.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(pet.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text(pet.shortDescriptor, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            pet.ageString(now)?.let { Text(stringResource(R.string.clients_age_prefix, it), style = MaterialTheme.typography.bodyMedium) }
+                        }
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
+                        TextButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
+                        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = AGGRESSIVE_RED) }
+                    }
+                }
             }
         }
         item {
             if (pet.hasActiveVisit) {
                 Button(onClick = onStartCheckout, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text("Checkout — end session")
+                    Text(stringResource(R.string.clients_checkout_end_session))
                 }
             } else {
                 Button(onClick = onCheckIn, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text("Check in")
+                    Text(stringResource(R.string.clients_check_in))
                 }
             }
         }
         if (pet.isAggressive) item {
-            Card(colors = CardDefaults.cardColors(containerColor = AGGRESSIVE_RED.copy(alpha = 0.12f))) {
-                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            PawtrackrCard(
+                modifier = Modifier.fillMaxWidth(),
+                accentColor = PawtrackrSemanticColor.Danger,
+                containerColor = PawtrackrSemanticColor.Danger.copy(alpha = 0.10f)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Warning, null, tint = AGGRESSIVE_RED)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Handle with care — flagged aggressive", color = AGGRESSIVE_RED, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.width(PawtrackrTokens.sm))
+                    Text(stringResource(R.string.clients_safety_banner), color = AGGRESSIVE_RED, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
         if (pet.behaviorTags.isNotEmpty()) item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                pet.behaviorTags.forEach { AssistChip(onClick = {}, label = { Text(it) }) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.xs)) {
+                pet.behaviorTags.forEach { PawtrackrChip(label = it, tone = if (pet.isAggressive) PawtrackrChipTone.Danger else PawtrackrChipTone.Neutral) }
             }
         }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard("Visits", pet.completedVisitCount.toString(), Modifier.weight(1f))
-                StatCard("Lifetime", money(pet.lifetimeValue), Modifier.weight(1f))
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PawtrackrTokens.md), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+                PawtrackrKpiCard(stringResource(R.string.clients_visits), pet.completedVisitCount.toString(), Modifier.weight(1f), PawtrackrSemanticColor.Info)
+                PawtrackrKpiCard(stringResource(R.string.clients_lifetime), money(pet.lifetimeValue), Modifier.weight(1f), PawtrackrSemanticColor.Success)
             }
         }
-        item { Text("Visit history", style = MaterialTheme.typography.titleMedium) }
+        item { PawtrackrSectionTitle(stringResource(R.string.clients_visit_history)) }
         val sorted = pet.visits.sortedByDescending { it.sortKeyDate }
-        if (sorted.isEmpty()) item { Text("No visits yet.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (sorted.isEmpty()) item {
+            PawtrackrCard(Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.clients_no_visits), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         items(sorted, key = { it.id }) { v ->
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(12.dp).fillMaxWidth()) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(fmtDate(v.sortKeyDate))
-                        if (v.isActive) Text("In session", color = MaterialTheme.colorScheme.primary)
-                        else Text(money(v.effectiveTotal), fontWeight = FontWeight.SemiBold)
-                    }
+            PawtrackrCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.sm)) {
+                    PawtrackrTimelineItem(
+                        title = fmtDate(v.sortKeyDate),
+                        subtitle = if (v.isActive) stringResource(R.string.clients_status_in_session) else money(v.effectiveTotal),
+                        accentColor = if (v.isActive) PawtrackrSemanticColor.Success else PawtrackrStaticColor.BrandPrimary,
+                        showConnector = false,
+                        trailing = {
+                            if (v.isActive) PawtrackrChip(stringResource(R.string.clients_status_in_session), tone = PawtrackrChipTone.Success)
+                            else Text(money(v.effectiveTotal), fontWeight = FontWeight.SemiBold)
+                        }
+                    )
                     if (v.hasPhotos) {
-                        Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            v.beforeThumb?.let { PhotoThumb(it, "Before") }
-                            v.afterThumb?.let { PhotoThumb(it, "After") }
+                            v.beforeThumb?.let {
+                                PawtrackrPhotoWell(
+                                    label = stringResource(R.string.clients_photo_before),
+                                    bytes = it,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            v.afterThumb?.let {
+                                PawtrackrPhotoWell(
+                                    label = stringResource(R.string.clients_photo_after),
+                                    bytes = it,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier) {
-        Column(Modifier.padding(12.dp)) {
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-@Composable
-private fun PhotoThumb(bytes: ByteArray, label: String) {
-    val image = remember(bytes) { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        if (image != null) {
-            Image(
-                bitmap = image,
-                contentDescription = label,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp))
-            )
-        }
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -581,10 +717,10 @@ private fun ClientFormDialog(
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(first, { first = it }, label = { Text("First name") }, singleLine = true)
-                OutlinedTextField(last, { last = it }, label = { Text("Last name") }, singleLine = true)
-                OutlinedTextField(phone, { phone = it }, label = { Text("Phone") }, singleLine = true)
-                OutlinedTextField(email, { email = it }, label = { Text("Email") }, singleLine = true)
+                OutlinedTextField(first, { first = it }, label = { Text(stringResource(R.string.clients_first_name)) }, singleLine = true)
+                OutlinedTextField(last, { last = it }, label = { Text(stringResource(R.string.clients_last_name)) }, singleLine = true)
+                OutlinedTextField(phone, { phone = it }, label = { Text(stringResource(R.string.clients_phone)) }, singleLine = true)
+                OutlinedTextField(email, { email = it }, label = { Text(stringResource(R.string.clients_email)) }, singleLine = true)
             }
         },
         confirmButton = {
@@ -593,7 +729,7 @@ private fun ClientFormDialog(
                 onClick = { onConfirm(first, last, phone.ifBlank { null }, email.ifBlank { null }) }
             ) { Text(confirmLabel) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }
 
@@ -618,8 +754,8 @@ private fun PetFormDialog(
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-                OutlinedTextField(breed, { breed = it }, label = { Text("Breed (optional)") }, singleLine = true)
+                OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.clients_name)) }, singleLine = true)
+                OutlinedTextField(breed, { breed = it }, label = { Text(stringResource(R.string.clients_breed_optional)) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Species.entries.forEach { s ->
                         FilterChip(selected = species == s, onClick = { species = s }, label = { Text(s.displayName) })
@@ -635,7 +771,7 @@ private fun PetFormDialog(
         confirmButton = {
             TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name, species, gender, breed.ifBlank { null }) }) { Text(confirmLabel) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }
 
@@ -645,7 +781,7 @@ private fun ConfirmDeleteDialog(title: String, message: String, onDismiss: () ->
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Delete", color = AGGRESSIVE_RED) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_delete), color = AGGRESSIVE_RED) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }
