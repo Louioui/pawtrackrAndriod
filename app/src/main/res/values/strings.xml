@@ -52,6 +52,8 @@
     <string name="settings_needs_name">Business name required</string>
     <string name="settings_invalid_email">Invalid email</string>
     <string name="settings_contact_section">Contact details</string>
+    <string name="settings_guidance_section">Guidance</string>
+    <string name="settings_replay_walkthrough">Replay walkthrough</string>
 
     <!-- Onboarding -->
     <string name="onboarding_brand_name">Pawtrackr</string>

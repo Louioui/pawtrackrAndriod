@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
@@ -43,7 +44,11 @@ fun PawtrackrRoot(
             OnboardingScreen(vm)
         }
 
-        RootGate.READY ->
+        RootGate.READY -> {
+            LaunchedEffect(container) {
+                container.walkthroughAutoLauncher.startAfterSetupIfNeeded(isSetupComplete = true)
+            }
             PawtrackrApp(container, windowWidthSizeClass, checkoutFactoryProvider)
+        }
     }
 }

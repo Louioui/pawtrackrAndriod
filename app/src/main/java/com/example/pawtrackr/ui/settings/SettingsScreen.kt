@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,7 +41,11 @@ import com.example.pawtrackr.ui.theme.PawtrackrStaticColor
 import com.example.pawtrackr.ui.theme.PawtrackrTokens
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    modifier: Modifier = Modifier,
+    onReplayWalkthrough: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(modifier = modifier, topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
@@ -57,6 +62,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
             verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.lg)
         ) {
             SettingsHeaderCard(state)
+            SettingsGuidanceCard(onReplayWalkthrough)
             SettingsFormCard(state, viewModel)
             Button(
                 onClick = viewModel::save,
@@ -65,6 +71,24 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
             ) {
                 if (state.saving) CircularProgressIndicator(Modifier.heightIn(max = 18.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.settings_save_changes))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsGuidanceCard(onReplayWalkthrough: () -> Unit) {
+    PawtrackrCard(
+        modifier = Modifier.fillMaxWidth(),
+        accentColor = PawtrackrStaticColor.BrandPrimary
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(PawtrackrTokens.md)) {
+            PawtrackrSectionTitle(stringResource(R.string.settings_guidance_section))
+            OutlinedButton(
+                onClick = onReplayWalkthrough,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            ) {
+                Text(stringResource(R.string.settings_replay_walkthrough))
             }
         }
     }

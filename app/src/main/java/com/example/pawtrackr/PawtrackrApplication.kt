@@ -11,5 +11,11 @@ class PawtrackrApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        container.runtimeServices.start()
+    }
+
+    override fun onTerminate() {
+        container.runtimeServices.stop()
+        super.onTerminate()
     }
 }

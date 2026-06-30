@@ -11,6 +11,15 @@ import com.example.pawtrackr.data.repository.ServiceRepository
 import com.example.pawtrackr.data.repository.SummaryRepository
 import com.example.pawtrackr.data.repository.VisitRepository
 import com.example.pawtrackr.data.seed.DebugSeeder
+import com.pawtrackr.app.core.search.AppSearchEmbeddingEngine
+import com.pawtrackr.app.core.runtime.PawtrackrRuntimeServices
+import com.pawtrackr.app.core.services.DeviceWorkloadPolicyManager
+import com.pawtrackr.app.core.storage.CheckoutTransactionBatchWriter
+import com.pawtrackr.app.core.storage.CheckoutTransactionRingBufferAuditBuffer
+import com.pawtrackr.app.core.storage.TransactionRingBuffer
+import com.pawtrackr.app.features.walkthrough.SharedPreferencesWalkthroughLaunchStore
+import com.pawtrackr.app.features.walkthrough.WalkthroughAutoLauncher
+import com.pawtrackr.app.features.walkthrough.WalkthroughSessionController
 
 /**
  * Manual dependency container — single source of wiring for the app. (A DI framework
@@ -30,6 +39,26 @@ class AppContainer(context: Context) {
     val summaryRepository: SummaryRepository = SummaryRepository(database, currentUserId)
     val businessConfigRepository: BusinessConfigRepository = BusinessConfigRepository(database.businessConfigDao())
     val messageTemplateRepository: MessageTemplateRepository = MessageTemplateRepository(database.messageTemplateDao())
-    val checkoutRepository: CheckoutRepository = CheckoutRepository(database, summaryRepository)
+    val appSearchEmbeddingEngine: AppSearchEmbeddingEngine = AppSearchEmbeddingEngine()
+    val deviceWorkloadPolicyManager: DeviceWorkloadPolicyManager = DeviceWorkloadPolicyManager(context)
+    val walkthroughSessionController: WalkthroughSessionController = WalkthroughSessionController()
+    val walkthroughLaunchStore = SharedPreferencesWalkthroughLaunchStore(context)
+    val walkthroughAutoLauncher = WalkthroughAutoLauncher(walkthroughLaunchStore, walkthroughSessionController)
+    val checkoutTransactionRingBuffer = TransactionRingBuffer(
+        capacity = 128,
+        batchWriter = CheckoutTransactionBatchWriter(database),
+        operatingPolicy = deviceWorkloadPolicyManager.operatingPolicy
+    )
+    val checkoutRepository: CheckoutRepository = CheckoutRepository(
+        db = database,
+        summaryRepository = summaryRepository,
+        checkoutAuditBuffer = CheckoutTransactionRingBufferAuditBuffer(checkoutTransactionRingBuffer)
+    )
+    val runtimeServices: PawtrackrRuntimeServices = PawtrackrRuntimeServices(
+        listOf(
+            deviceWorkloadPolicyManager,
+            checkoutTransactionRingBuffer
+        )
+    )
     val debugSeeder: DebugSeeder = DebugSeeder(database, currentUserId)
 }

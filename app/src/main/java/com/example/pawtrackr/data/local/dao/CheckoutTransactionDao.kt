@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.example.pawtrackr.data.local.entities.CheckoutTransactionEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -15,6 +16,9 @@ interface CheckoutTransactionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: CheckoutTransactionEntity)
+
+    @Upsert
+    suspend fun upsertAll(items: List<CheckoutTransactionEntity>)
 
     @Query("SELECT * FROM checkout_transactions WHERE id = :id")
     suspend fun getById(id: String): CheckoutTransactionEntity?

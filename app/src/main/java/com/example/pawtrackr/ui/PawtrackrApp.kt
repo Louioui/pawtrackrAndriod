@@ -28,6 +28,7 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -53,12 +54,28 @@ import com.example.pawtrackr.ui.settings.SettingsScreen
 import com.example.pawtrackr.ui.settings.SettingsViewModel
 import com.example.pawtrackr.ui.theme.PawtrackrStaticColor
 import com.example.pawtrackr.ui.theme.PawtrackrTokens
+import com.pawtrackr.app.features.walkthrough.WalkthroughOverlay
+import com.pawtrackr.app.features.walkthrough.PawtrackrWalkthrough
+import com.pawtrackr.app.features.walkthrough.walkthroughTarget
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.util.Locale
 
-private enum class AppDestination(val labelRes: Int, val icon: ImageVector) {
-    DASHBOARD(R.string.nav_home, Icons.Default.Home),
-    CLIENTS(R.string.nav_clients, Icons.Default.Person),
-    INSIGHTS(R.string.nav_insights, Icons.Default.DateRange),
-    SETTINGS(R.string.nav_settings, Icons.Default.Settings)
+private enum class AppDestination(
+    val key: String,
+    val labelRes: Int,
+    val icon: ImageVector
+) {
+    DASHBOARD("dashboard", R.string.nav_home, Icons.Default.Home),
+    CLIENTS("clients", R.string.nav_clients, Icons.Default.Person),
+    INSIGHTS("insights", R.string.nav_insights, Icons.Default.DateRange),
+    SETTINGS("settings", R.string.nav_settings, Icons.Default.Settings);
+
+    companion object {
+        fun fromWalkthroughStepId(stepId: String?): AppDestination? {
+            val key = PawtrackrWalkthrough.destinationKeyFor(stepId) ?: return null
+            return entries.firstOrNull { destination -> destination.key == key }
+        }
+    }
 }
 
 /**
@@ -74,6 +91,13 @@ fun PawtrackrApp(
 ) {
     var destination by rememberSaveable { mutableStateOf(AppDestination.DASHBOARD) }
     val useRail = windowWidthSizeClass != WindowWidthSizeClass.Compact
+    val walkthroughState by container.walkthroughSessionController.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(walkthroughState.activeStep?.id) {
+        AppDestination.fromWalkthroughStepId(walkthroughState.activeStep?.id)?.let { walkthroughDestination ->
+            destination = walkthroughDestination
+        }
+    }
 
     val content: @Composable () -> Unit = {
         when (destination) {
@@ -90,6 +114,7 @@ fun PawtrackrApp(
                         petRepository = container.petRepository,
                         visitRepository = container.visitRepository,
                         messageTemplateRepository = container.messageTemplateRepository,
+                        searchEmbeddingEngine = container.appSearchEmbeddingEngine,
                         currentUserId = container.currentUserId
                     )
                 )
@@ -101,60 +126,80 @@ fun PawtrackrApp(
             }
             AppDestination.SETTINGS -> {
                 val vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(container.businessConfigRepository))
-                SettingsScreen(vm)
+                SettingsScreen(
+                    viewModel = vm,
+                    onReplayWalkthrough = {
+                        container.walkthroughSessionController.start(PawtrackrWalkthrough.navigationSteps())
+                    }
+                )
             }
         }
     }
 
-    if (useRail) {
-        Row(Modifier.fillMaxSize()) {
-            NavigationRail(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                header = { RailBrandMark() }
-            ) {
-                AppDestination.entries.forEach { d ->
-                    val label = stringResource(d.labelRes)
-                    NavigationRailItem(
-                        selected = destination == d,
-                        onClick = { destination = d },
-                        icon = { Icon(d.icon, contentDescription = label) },
-                        label = { Text(label) },
-                        colors = NavigationRailItemDefaults.colors(
-                            selectedIconColor = PawtrackrStaticColor.BrandPrimary,
-                            selectedTextColor = PawtrackrStaticColor.BrandPrimary,
-                            indicatorColor = PawtrackrStaticColor.BrandPrimary.copy(alpha = 0.13f)
+    Box(Modifier.fillMaxSize()) {
+        if (useRail) {
+            Row(Modifier.fillMaxSize()) {
+                NavigationRail(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    header = { RailBrandMark() }
+                ) {
+                    AppDestination.entries.forEach { d ->
+                        val label = stringResource(d.labelRes)
+                        NavigationRailItem(
+                            modifier = Modifier.walkthroughTarget(
+                                stepId = d.walkthroughStepId,
+                                controller = container.walkthroughSessionController
+                            ),
+                            selected = destination == d,
+                            onClick = { destination = d },
+                            icon = { Icon(d.icon, contentDescription = label) },
+                            label = { Text(label) },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = PawtrackrStaticColor.BrandPrimary,
+                                selectedTextColor = PawtrackrStaticColor.BrandPrimary,
+                                indicatorColor = PawtrackrStaticColor.BrandPrimary.copy(alpha = 0.13f)
+                            )
                         )
-                    )
+                    }
+                }
+                Box(Modifier.weight(1f).fillMaxHeight()) { content() }
+            }
+        } else {
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxWidth()) { content() }
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    AppDestination.entries.forEach { d ->
+                        val label = stringResource(d.labelRes)
+                        NavigationBarItem(
+                            modifier = Modifier.walkthroughTarget(
+                                stepId = d.walkthroughStepId,
+                                controller = container.walkthroughSessionController
+                            ),
+                            selected = destination == d,
+                            onClick = { destination = d },
+                            icon = { Icon(d.icon, contentDescription = label) },
+                            label = { Text(label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = PawtrackrStaticColor.BrandPrimary,
+                                selectedTextColor = PawtrackrStaticColor.BrandPrimary,
+                                indicatorColor = PawtrackrStaticColor.BrandPrimary.copy(alpha = 0.13f)
+                            )
+                        )
+                    }
                 }
             }
-            Box(Modifier.weight(1f).fillMaxHeight()) { content() }
         }
-    } else {
-        Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f).fillMaxWidth()) { content() }
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ) {
-                AppDestination.entries.forEach { d ->
-                    val label = stringResource(d.labelRes)
-                    NavigationBarItem(
-                        selected = destination == d,
-                        onClick = { destination = d },
-                        icon = { Icon(d.icon, contentDescription = label) },
-                        label = { Text(label) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PawtrackrStaticColor.BrandPrimary,
-                            selectedTextColor = PawtrackrStaticColor.BrandPrimary,
-                            indicatorColor = PawtrackrStaticColor.BrandPrimary.copy(alpha = 0.13f)
-                        )
-                    )
-                }
-            }
-        }
+
+        WalkthroughOverlay(controller = container.walkthroughSessionController)
     }
 }
+
+private val AppDestination.walkthroughStepId: String
+    get() = "nav_${name.lowercase(Locale.US)}"
 
 @Composable
 private fun RailBrandMark() {

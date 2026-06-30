@@ -11,7 +11,9 @@ import com.example.pawtrackr.domain.model.Client
 import com.example.pawtrackr.domain.model.MessageTemplate
 import com.example.pawtrackr.domain.model.PetGender
 import com.example.pawtrackr.domain.model.Species
+import com.example.pawtrackr.domain.search.ClientSemanticSearch
 import com.example.pawtrackr.domain.text.SearchNormalizer
+import com.pawtrackr.app.core.search.AppSearchEmbeddingEngine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +48,7 @@ class ClientsViewModel(
     private val petRepository: PetRepository,
     private val visitRepository: VisitRepository,
     private val messageTemplateRepository: MessageTemplateRepository,
+    private val searchEmbeddingEngine: AppSearchEmbeddingEngine,
     private val currentUserId: String,
     private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
@@ -77,19 +80,31 @@ class ClientsViewModel(
             initialValue = ClientsUiState()
         )
 
-    private fun buildState(clients: List<Client>, q: String, f: ClientFilter, s: ClientSort): ClientsUiState {
+    private suspend fun buildState(clients: List<Client>, q: String, f: ClientFilter, s: ClientSort): ClientsUiState {
         val now = nowProvider()
-        val matched = clients.filter { c ->
-            val passesSearch = SearchNormalizer.matches(
-                q, c.fullName, c.phone, c.email, *c.pets.map { it.name }.toTypedArray()
-            )
-            val passesFilter = when (f) {
+        val filtered = clients.filter { c ->
+            when (f) {
                 ClientFilter.ALL -> true
                 ClientFilter.ACTIVE -> c.hasActiveVisit
                 ClientFilter.NEEDS_ATTENTION -> c.needsAttention(now)
                 ClientFilter.MISSING_INFO -> c.hasMissingInfo
             }
-            passesSearch && passesFilter
+        }
+        val matched = if (q.isBlank()) {
+            filtered
+        } else {
+            val exactMatches = filtered.filter { c ->
+                SearchNormalizer.matches(
+                    q, c.fullName, c.phone, c.email, *c.pets.map { it.name }.toTypedArray()
+                )
+            }
+            val semanticMatches = ClientSemanticSearch.rank(
+                query = q,
+                clients = filtered,
+                searchEmbeddingEngine = searchEmbeddingEngine
+            )
+            (exactMatches + semanticMatches)
+                .distinctBy { it.id }
         }
         val comparator = when (s) {
             ClientSort.NAME -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.fullName }
@@ -164,6 +179,7 @@ class ClientsViewModel(
         private val petRepository: PetRepository,
         private val visitRepository: VisitRepository,
         private val messageTemplateRepository: MessageTemplateRepository,
+        private val searchEmbeddingEngine: AppSearchEmbeddingEngine,
         private val currentUserId: String
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -171,7 +187,14 @@ class ClientsViewModel(
             require(modelClass.isAssignableFrom(ClientsViewModel::class.java)) {
                 "Unknown ViewModel class: ${modelClass.name}"
             }
-            return ClientsViewModel(clientRepository, petRepository, visitRepository, messageTemplateRepository, currentUserId) as T
+            return ClientsViewModel(
+                clientRepository = clientRepository,
+                petRepository = petRepository,
+                visitRepository = visitRepository,
+                messageTemplateRepository = messageTemplateRepository,
+                searchEmbeddingEngine = searchEmbeddingEngine,
+                currentUserId = currentUserId
+            ) as T
         }
     }
 }

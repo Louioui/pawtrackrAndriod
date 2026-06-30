@@ -11,6 +11,7 @@ import com.example.pawtrackr.domain.checkout.CheckoutRequest
 import com.example.pawtrackr.domain.checkout.CheckoutResult
 import com.example.pawtrackr.domain.checkout.LineInput
 import com.example.pawtrackr.domain.loyalty.LoyaltyEngine
+import com.pawtrackr.app.core.storage.CheckoutAuditBuffer
 import java.math.BigDecimal
 
 /**
@@ -32,27 +33,34 @@ import java.math.BigDecimal
  */
 class CheckoutRepository(
     private val db: PawtrackrDatabase,
-    private val summaryRepository: SummaryRepository
+    private val summaryRepository: SummaryRepository,
+    private val checkoutAuditBuffer: CheckoutAuditBuffer = CheckoutAuditBuffer.NoOp
 ) {
     suspend fun processCheckout(request: CheckoutRequest): CheckoutResult {
-        val result = runCheckout(request)
+        val execution = runCheckout(request)
+        execution.auditTransaction?.let { transaction ->
+            runCatching { checkoutAuditBuffer.offer(transaction) }
+        }
         // Outside the checkout transaction: rebuild analytics from the committed visit data.
         summaryRepository.rebuildAll()
-        return result
+        return execution.result
     }
 
-    private suspend fun runCheckout(request: CheckoutRequest): CheckoutResult = db.withTransaction {
+    private suspend fun runCheckout(request: CheckoutRequest): CheckoutExecution = db.withTransaction {
         val key = "checkout:${request.visitId}"
         val existing = db.checkoutTransactionDao().getByIdempotencyKey(key)
 
         // Idempotency short-circuit: already done -> replay the result, charge nothing again.
         if (existing?.statusRaw == "succeeded" && existing.completedAt != null) {
             val visit = db.visitDao().getVisitById(request.visitId)
-            return@withTransaction CheckoutResult(
-                visitId = request.visitId,
-                total = visit?.total ?: existing.amount,
-                endedAt = existing.completedAt,
-                wasAlreadyComplete = true
+            return@withTransaction CheckoutExecution(
+                result = CheckoutResult(
+                    visitId = request.visitId,
+                    total = visit?.total ?: existing.amount,
+                    endedAt = existing.completedAt,
+                    wasAlreadyComplete = true
+                ),
+                auditTransaction = null
             )
         }
 
@@ -146,6 +154,14 @@ class CheckoutRepository(
             )
         db.checkoutTransactionDao().upsert(txn)
 
-        CheckoutResult(visitId = request.visitId, total = finalTotal, endedAt = now, wasAlreadyComplete = false)
+        CheckoutExecution(
+            result = CheckoutResult(visitId = request.visitId, total = finalTotal, endedAt = now, wasAlreadyComplete = false),
+            auditTransaction = txn
+        )
     }
+
+    private data class CheckoutExecution(
+        val result: CheckoutResult,
+        val auditTransaction: CheckoutTransactionEntity?
+    )
 }
